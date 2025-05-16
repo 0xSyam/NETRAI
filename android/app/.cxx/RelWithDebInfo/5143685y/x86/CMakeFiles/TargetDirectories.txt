@@ -1,0 +1,2 @@
+D:/baru/android/app/.cxx/RelWithDebInfo/5143685y/x86/CMakeFiles/edit_cache.dir
+D:/baru/android/app/.cxx/RelWithDebInfo/5143685y/x86/CMakeFiles/rebuild_cache.dir

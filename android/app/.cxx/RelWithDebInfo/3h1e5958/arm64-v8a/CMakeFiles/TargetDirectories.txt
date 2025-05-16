@@ -1,0 +1,2 @@
+D:/NETRAI/V3/android/app/.cxx/RelWithDebInfo/3h1e5958/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/NETRAI/V3/android/app/.cxx/RelWithDebInfo/3h1e5958/arm64-v8a/CMakeFiles/rebuild_cache.dir
