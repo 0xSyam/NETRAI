@@ -2,8 +2,8 @@
   <img src="assets/images/logo.svg" alt="Netrai Logo" width="180"/>
   <p><em>Empowering the visually impaired with real-time AI and caregiver assistance</em></p>
   <p>
-    <a href="https://github.com/your-username/netrai/actions"><img src="https://img.shields.io/github/actions/workflow/status/your-username/netrai/ci.yml?branch=main&label=CI&logo=github" alt="CI Status"></a>
-    <a href="https://github.com/your-username/netrai/blob/main/LICENSE"><img src="https://img.shields.io/github/license/your-username/netrai?color=blue" alt="License"></a>
+    <a href="https://github.com/0xSyam/Netrai/actions"><img src="https://img.shields.io/github/actions/workflow/status/0xSyam/Netrai/ci.yml?branch=main&label=CI&logo=github" alt="CI Status"></a>
+    <a href="https://github.com/0xSyam/Netrai/blob/main/LICENSE"><img src="https://img.shields.io/github/license/0xSyam/Netrai?color=blue" alt="License"></a>
   </p>
 </div>
 
@@ -87,7 +87,7 @@ Netrai/
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/netrai.git
+   git clone https://github.com/0xSyam/Netrai.git
    cd netrai
    ```
 
