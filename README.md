@@ -30,7 +30,15 @@ Netrai serves two main user roles:
   - Live video streaming using LiveKit (WebRTC)
   - AI-powered voice and vision interaction using Gemini API
   - Backend Python agent for AI processing
-
+    
+**Real-time Video & Audio**
+- 📱 Front and back camera support
+- 🎙️ Natural voice conversations
+- 🖥️ Live screen sharing
+- Background Support
+- 🔄 Continues running while using other apps
+- 💬 Voice conversations in background
+- 👀 Screen monitoring while multitasking
 ---
 
 ## 🛠️ Tech Stack
@@ -43,6 +51,7 @@ Netrai serves two main user roles:
 - Google Maps API & Direction API (navigation & maps)
 - LiveKit (WebRTC for video communication)
 - Gemini API (Google's LLM for voice & video analysis)
+  
 
 **Backend**
 
@@ -50,6 +59,10 @@ Netrai serves two main user roles:
 - LiveKit Server SDK
 - Google Gemini API
 
+**Agent Architecture**
+The backend agent is built on the [MultimodalAgent](https://docs.livekit.io/agents/build/) class hooked up to the Gemini Live API.
+
+Video frames are sampled at 1 frame per second while the user speaks, and 0.3 frames per second otherwise. Images are sent as JPEG at 1024x1024 max size. For more information on video input, see the LiveKit Agents [vision docs](https://docs.livekit.io/agents/build/vision/#video).
 ---
 
 ## 📂 Repository Structure
