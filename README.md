@@ -68,7 +68,7 @@ Netrai/
 ├── web/                  # Web platform files
 ├── macos/                # macOS-specific configuration
 ├── test/                 # Test directory
-├── agent/                # Backend code (Python AI agent)
+├── Backend/                # Backend code (Python AI agent)
 │   ├── main.py           # Backend entry point
 │   ├── handlers/         # Gemini & LiveKit logic
 │   ├── .env              # Env variables (not committed)
@@ -124,10 +124,10 @@ Netrai/
 
 ### Setup
 
-1. **Navigate to the agent directory:**
+1. **Navigate to the Backend directory:**
 
    ```bash
-   cd agent
+   cd Backend
    ```
 
 2. **Create a `.env` file and fill in:**
@@ -149,7 +149,7 @@ Netrai/
 
 4. **Run the backend service:**
    ```bash
-   python main.py
+   python main.py dev
    ```
 
 ---
