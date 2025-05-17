@@ -63,6 +63,7 @@ Netrai serves two main user roles:
 The backend agent is built on the [MultimodalAgent](https://docs.livekit.io/agents/build/) class hooked up to the Gemini Live API.
 
 Video frames are sampled at 1 frame per second while the user speaks, and 0.3 frames per second otherwise. Images are sent as JPEG at 1024x1024 max size. For more information on video input, see the LiveKit Agents [vision docs](https://docs.livekit.io/agents/build/vision/#video).
+
 ---
 
 ## 📂 Repository Structure
