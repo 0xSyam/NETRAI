@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:haptic_feedback/haptic_feedback.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/location_Service.dart';
+import '../services/location_Service.dart'; // Assuming LocationService is correctly implemented
 import 'dart:async';
 import 'package:app_settings/app_settings.dart';
-import '../services/location_update_service.dart';
+import '../services/location_update_service.dart'; // Assuming LocationUpdateService is correctly implemented
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,33 +15,31 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Kunci untuk shared preferences
+  // Keys for shared preferences
   static const String _hapticFeedbackKey = 'haptic_feedback_preference';
-  static const String _automaticFlashlightKey =
-      'automatic_flashlight_preference';
-  static const String _cameraGuidanceKey = 'camera_guidance_preference';
-  static const String _showToolbarKey = 'show_toolbar_preference';
+  static const String _automaticFlashlightKey = 'automatic_flashlight_preference'; // Currently unused due to commented out UI
+  static const String _cameraGuidanceKey = 'camera_guidance_preference'; // Currently unused due to commented out UI
+  static const String _showToolbarKey = 'show_toolbar_preference'; // Currently unused due to commented out UI
   static const String _shareLocationKey = 'share_location_preference';
-  static const String _selectedVoiceKey =
-      'selected_voice_preference'; // Kunci baru untuk preferensi suara
+  static const String _selectedVoiceKey = 'selected_voice_preference'; // New key for voice preference
 
-  // State untuk toggle switches utama
-  bool _automaticFlashlight = false;
-  bool _cameraGuidance = false;
+  // State for main toggle switches
+  // bool _automaticFlashlight = false; // Currently unused
+  // bool _cameraGuidance = false; // Currently unused
   bool _hapticFeedback = false;
   bool _shareLocation = false;
 
-  // State untuk AI Voice Settings
-  bool _isAiVoiceExpanded = false; // Kontrol ekspansi
-  bool _showToolbar = true;
-  bool _resetToDefault = false; // State untuk toggle reset
-  double _speechRate = 0.5; // Nilai 0.0 - 1.0
-  double _pitch = 0.5; // Nilai 0.0 - 1.0
-  String _selectedVoice = 'Kore'; // Default suara
+  // State for AI Voice Settings
+  bool _isAiVoiceExpanded = false; // Expansion control
+  // bool _showToolbar = true; // Currently unused
+  // bool _resetToDefault = false; // Currently unused
+  // double _speechRate = 0.5; // Value 0.0 - 1.0, currently unused
+  // double _pitch = 0.5; // Value 0.0 - 1.0, currently unused
+  String _selectedVoice = 'Kore'; // Default voice
 
-  Timer? _locationTimer;
+  Timer? _locationTimer; // Potentially for location related tasks, seems unused in current visible logic
 
-  // Helper widget untuk item pengaturan dengan toggle
+  // Helper widget for settings items with a toggle switch
   Widget _buildToggleSettingItem({
     required String title,
     required String subtitle,
@@ -73,9 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     fontFamily: 'Inter',
-                    color: Colors.black.withOpacity(
-                      0.6,
-                    ), // Subtitle lebih redup
+                    color: Colors.black.withOpacity(0.6), // Subtitle dimmer
                   ),
                 ),
               ],
@@ -84,60 +80,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor:
-                const Color(0xFF3A59D1), // Warna toggle aktif (#3A59D1)
-            inactiveTrackColor:
-                const Color(0xFFD9D9D9), // Warna track non-aktif (#D9D9D9)
+            activeColor: const Color(0xFF3A59D1), // Active toggle color (#3A59D1)
+            inactiveTrackColor: const Color(0xFFD9D9D9), // Inactive track color (#D9D9D9)
           ),
         ],
       ),
     );
   }
 
-  // Helper untuk Slider
-  Widget _buildSliderSettingItem({
-    required String label,
-    required double value,
-    required ValueChanged<double> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: Colors.black.withOpacity(0.8),
-            ),
-          ),
-          Slider(
-            value: value,
-            onChanged: onChanged,
-            min: 0.0,
-            max: 1.0,
-            activeColor: Colors.grey.shade600,
-            inactiveColor: Colors.grey.shade300,
-          ),
-        ],
-      ),
-    );
-  }
+  // Helper for Slider (currently unused as related UI is commented out)
+  // Widget _buildSliderSettingItem({
+  //   required String label,
+  //   required double value,
+  //   required ValueChanged<double> onChanged,
+  // }) { ... }
 
-  // Widget untuk dropdown pilihan suara - menggantikan _buildGenderOptions
+  // Widget for voice selection dropdown - replaces _buildGenderOptions
   Widget _buildVoiceOptions() {
-    // Daftar suara Google yang tersedia
+    // Available Google voices
     final List<String> voices = [
-      'Puck',
-      'Charon',
-      'Kore',
-      'Fenrir',
-      'Aoede',
-      'Leda',
-      'Orus',
-      'Zephyr'
+      'Puck', 'Charon', 'Kore', 'Fenrir',
+      'Aoede', 'Leda', 'Orus', 'Zephyr'
     ];
 
     return Padding(
@@ -146,7 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Pilihan suara AI',
+            'AI Voice Selection', // Translated
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w400,
@@ -163,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: DropdownButton<String>(
               value: _selectedVoice,
               isExpanded: true,
-              underline: Container(), // Menghilangkan underline
+              underline: Container(), // Removes the default underline
               icon: const Icon(Icons.keyboard_arrow_down),
               items: voices.map((String voice) {
                 return DropdownMenuItem<String>(
@@ -189,30 +152,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPreferences(); // Muat semua preferensi saat initState
+    _loadPreferences(); // Load all preferences during initState
   }
 
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _hapticFeedback = prefs.getBool(_hapticFeedbackKey) ?? false;
-      _automaticFlashlight = prefs.getBool(_automaticFlashlightKey) ?? false;
-      _cameraGuidance = prefs.getBool(_cameraGuidanceKey) ?? false;
-      _showToolbar = prefs.getBool(_showToolbarKey) ??
-          true; // Default ke true untuk showToolbar
+      // _automaticFlashlight = prefs.getBool(_automaticFlashlightKey) ?? false; // For commented out UI
+      // _cameraGuidance = prefs.getBool(_cameraGuidanceKey) ?? false; // For commented out UI
+      // _showToolbar = prefs.getBool(_showToolbarKey) ?? true; // For commented out UI
       _shareLocation = prefs.getBool(_shareLocationKey) ?? false;
-      _selectedVoice = prefs.getString(_selectedVoiceKey) ??
-          'Kore'; // Memuat preferensi suara
+      _selectedVoice = prefs.getString(_selectedVoiceKey) ?? 'Kore'; // Load voice preference
     });
   }
 
-  // Fungsi generik untuk menyimpan preferensi boolean
+  // Generic function to save boolean preferences
   Future<void> _saveBoolPreference(String key, bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(key, value);
   }
 
-  // Fungsi untuk menyimpan preferensi string
+  // Function to save string preferences
   Future<void> _saveStringPreference(String key, String value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, value);
@@ -244,34 +205,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         children: [
-          // HAPUS: Automatic flashlight
-          // _buildToggleSettingItem(
-          //   title: 'Automatic flashlight',
-          //   subtitle:
-          //       'Automatically use your flashlight to improve object identification',
-          //   value: _automaticFlashlight,
-          //   onChanged: (bool value) {
-          //     setState(() {
-          //       _automaticFlashlight = value;
-          //     });
-          //     _saveBoolPreference(_automaticFlashlightKey, value);
-          //   },
-          // ),
-          // const Divider(height: 1, indent: 16, endIndent: 16),
-          // HAPUS: Camera guidance
-          // _buildToggleSettingItem(
-          //   title: 'Camera guidance',
-          //   subtitle:
-          //       'Get voice tips and distance information in positioning your phone',
-          //   value: _cameraGuidance,
-          //   onChanged: (bool value) {
-          //     setState(() {
-          //       _cameraGuidance = value;
-          //     });
-          //     _saveBoolPreference(_cameraGuidanceKey, value);
-          //   },
-          // ),
-          // const Divider(height: 1, indent: 16, endIndent: 16),
+          // REMOVE: Automatic flashlight (Commented out UI)
+          // _buildToggleSettingItem( ... )
+          // REMOVE: Camera guidance (Commented out UI)
+          // _buildToggleSettingItem( ... )
           _buildToggleSettingItem(
             title: 'Haptic feedback',
             subtitle: 'Subtle vibration feedback during use',
@@ -293,7 +230,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // AI Voice Settings - ExpansionTile
           ExpansionTile(
-            key: PageStorageKey('ai_voice_settings'),
+            key: const PageStorageKey('ai_voice_settings'), // Added const
             title: const Text(
               'AI voice settings',
               style: TextStyle(
@@ -304,7 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             subtitle: Text(
-              'Manage toolbar and AI speech options',
+              'Manage AI speech options', // Simplified subtitle as toolbar option is removed
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -338,55 +275,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             expandedCrossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Divider(height: 1),
-              // HAPUS: Show toolbar for playback and display option
-              // _buildToggleSettingItem(
-              //   title: 'Show toolbar for playback and display option',
-              //   subtitle: '',
-              //   value: _showToolbar,
-              //   onChanged: (bool value) {
-              //     setState(() {
-              //       _showToolbar = value;
-              //     });
-              //     _saveBoolPreference(_showToolbarKey, value);
-              //   },
-              // ),
-              // HAPUS: Reset to default
-              // _buildToggleSettingItem(
-              //   title: 'Reset to default',
-              //   subtitle: '',
-              //   value: _resetToDefault,
-              //   onChanged: (bool value) {
-              //     setState(() {
-              //       _resetToDefault = value;
-              //       if (value) {
-              //         _speechRate = 0.5;
-              //         _pitch = 0.5;
-              //         _selectedGender = 'male';
-              //       }
-              //     });
-              //   },
-              // ),
-              // HAPUS: Speech rate
-              // _buildSliderSettingItem(
-              //   label: 'Speech rate',
-              //   value: _speechRate,
-              //   onChanged: (double value) {
-              //     setState(() {
-              //       _speechRate = value;
-              //     });
-              //   },
-              // ),
-              // HAPUS: Pitch
-              // _buildSliderSettingItem(
-              //   label: 'Pitch',
-              //   value: _pitch,
-              //   onChanged: (double value) {
-              //     setState(() {
-              //       _pitch = value;
-              //     });
-              //   },
-              // ),
-              _buildVoiceOptions(), // Menggunakan widget dropdown suara
+              // REMOVE: Show toolbar for playback and display option (Commented out UI)
+              // _buildToggleSettingItem( ... )
+              // REMOVE: Reset to default (Commented out UI)
+              // _buildToggleSettingItem( ... )
+              // REMOVE: Speech rate (Commented out UI)
+              // _buildSliderSettingItem( ... )
+              // REMOVE: Pitch (Commented out UI)
+              // _buildSliderSettingItem( ... )
+              _buildVoiceOptions(), // Using voice dropdown widget
             ],
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
@@ -403,30 +300,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (value) {
                 try {
                   await LocationService.updateLocationToFirestore();
-                  LocationUpdateService().start(); // Mulai service global
+                  LocationUpdateService().start(); // Start global service
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text('Lokasi berhasil dibagikan!')),
+                          content: Text('Location shared successfully!')), // Translated
                     );
                   }
                 } catch (e) {
-                  // Jika gagal (misal: GPS tidak aktif atau permission ditolak)
+                  // If fails (e.g., GPS inactive or permission denied)
                   if (mounted) {
-                    String msg = e.toString().contains('GPS tidak aktif')
-                        ? 'GPS tidak aktif. Silakan aktifkan GPS untuk membagikan lokasi.'
-                        : e.toString().contains('Izin lokasi')
-                            ? 'Izin lokasi tidak diberikan. Aktifkan izin lokasi di pengaturan.'
-                            : 'Gagal membagikan lokasi: $e';
+                    String msg = e.toString().contains('GPS tidak aktif') // GPS inactive (Indonesian)
+                        ? 'GPS is inactive. Please enable GPS to share location.' // Translated
+                        : e.toString().contains('Izin lokasi') // Location permission (Indonesian)
+                            ? 'Location permission not granted. Enable location permission in settings.' // Translated
+                            : 'Failed to share location: $e'; // Translated
                     if (e.toString().contains('GPS tidak aktif')) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(msg),
                           action: SnackBarAction(
-                            label: 'Aktifkan GPS',
+                            label: 'Enable GPS', // Translated
                             onPressed: () {
-                              AppSettings.openAppSettings(
-                                  type: AppSettingsType.location);
+                              AppSettings.openAppSettings(type: AppSettingsType.location);
                             },
                           ),
                         ),
@@ -437,19 +333,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     }
                   }
-                  // Kembalikan toggle ke false
+                  // Revert toggle to false
                   setState(() {
                     _shareLocation = false;
                   });
                   _saveBoolPreference(_shareLocationKey, false);
-                  LocationUpdateService().stop(); // Hentikan service global
+                  LocationUpdateService().stop(); // Stop global service
                 }
               } else {
-                LocationUpdateService().stop(); // Hentikan service global
+                LocationUpdateService().stop(); // Stop global service
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Berhenti membagikan lokasi.')),
+                    const SnackBar(content: Text('Stopped sharing location.')), // Translated
                   );
                 }
               }

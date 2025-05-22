@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-// import 'package:netrai/screens/welcome_screen.dart'; // <-- Hapus impor ini
-// import 'package:netrai/screens/main_screen.dart'; // Hapus impor MainScreen
+// import 'package:netrai/screens/welcome_screen.dart'; // <-- WelcomeScreen import removed
+// import 'package:netrai/screens/main_screen.dart'; // MainScreen import removed
 
-// Import Firebase Auth dan AuthService
+// Import Firebase Auth and AuthService
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart'; // Path diperbaiki
+import '../services/auth_service.dart'; // Path corrected
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,41 +22,38 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkLoginStatusAndNavigate() async {
-    // Beri sedikit waktu agar Flutter selesai inisialisasi jika diperlukan
-    // dan context siap digunakan.
+    // Allow a brief moment for Flutter to initialize if needed,
+    // and for the context to be ready.
     await Future.delayed(Duration.zero);
 
     final authService = AuthService();
 
-    // Gunakan authStateChanges untuk mendapatkan status terakhir
+    // Use authStateChanges to get the latest status
     final User? currentUser = await authService.authStateChanges.first;
 
     if (currentUser != null) {
-      print(
-          "[SplashScreen] Pengguna sudah login (${currentUser.uid}). Mengecek role user...");
-      // Ambil role user dari Firestore
+      // print("[SplashScreen] User is logged in (${currentUser.uid}). Checking user role..."); // Debug log, can be removed
+      // Get user role from Firestore
       final role = await authService.getUserRole(currentUser.uid);
-      print("[SplashScreen] Role user: $role");
+      // print("[SplashScreen] User role: $role"); // Debug log, can be removed
       if (!mounted) return;
-      if (role == 'keluarga') {
+      if (role == 'keluarga') { // 'keluarga' means family
         Navigator.pushReplacementNamed(context, '/location');
-      } else if (role == 'tunanetra') {
+      } else if (role == 'tunanetra') { // 'tunanetra' means visually impaired
         Navigator.pushReplacementNamed(context, '/main');
       } else {
-        // Role tidak dikenal, sign out dan kembali ke welcome
+        // Unknown role, sign out and return to welcome
         await authService.signOut();
         Navigator.pushReplacementNamed(context, '/welcome');
       }
     } else {
-      print(
-          "[SplashScreen] Pengguna belum login. Lanjutkan ke /welcome setelah delay.");
-      // Navigasi ke halaman berikutnya setelah beberapa detik jika belum login
+      // print("[SplashScreen] User not logged in. Proceeding to /welcome after delay."); // Debug log, can be removed
+      // Navigate to the next page after a few seconds if not logged in
       Future.delayed(const Duration(seconds: 3), () {
-        // Pastikan widget masih ter-mount sebelum navigasi
+        // Ensure the widget is still mounted before navigation
         if (mounted) {
-          // Ganti navigasi menggunakan pushReplacementNamed
-          Navigator.pushReplacementNamed(
-              context, '/welcome'); // <-- Gunakan named route
+          // Replace navigation using pushReplacementNamed
+          Navigator.pushReplacementNamed(context, '/welcome'); // <-- Use named route
         }
       });
     }
@@ -64,50 +61,45 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Mendapatkan ukuran layar
-    // final screenSize = MediaQuery.of(context).size; // Bisa dihapus jika tidak digunakan
+    // Get screen size
+    // final screenSize = MediaQuery.of(context).size; // Can be removed if not used
 
-    // TODO: Sesuaikan nilai-nilai hardcoded berdasarkan layout Figma yang lebih detail jika diperlukan
-    // Nilai-nilai ini mungkin perlu dihitung secara dinamis atau disesuaikan
-    // const double logoTopMargin = 150; // Dihapus, gunakan Column alignment
-    // const double logoWidth = 290; // Gunakan ukuran intrinsik gambar atau sesuaikan jika perlu
-    // const double textBottomMargin = 50; // Dihapus, gunakan SizedBox
-    // const double indicatorBottomMargin = 20; // Dihapus, tidak ada di Figma ini
+    // TODO: Adjust hardcoded values based on more detailed Figma layout if needed
+    // These values might need to be calculated dynamically or adjusted
+    // const double logoTopMargin = 150; // Removed, use Column alignment
+    // const double logoWidth = 290; // Use intrinsic image size or adjust if needed
+    // const double textBottomMargin = 50; // Removed, use SizedBox
+    // const double indicatorBottomMargin = 20; // Removed, not in this Figma design
 
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF3A59D1, // Warna latar belakang diperbarui sesuai Figma (#3A59D1)
-      ),
+      backgroundColor: const Color(0xFF3A59D1), // Background color updated as per Figma (#3A59D1)
       body: Center(
-        // Gunakan Center untuk memastikan Column berada di tengah secara horizontal
+        // Use Center to ensure Column is horizontally centered
         child: Padding(
-          // Beri padding horizontal keseluruhan jika diperlukan
+          // Add overall horizontal padding if needed
           padding: const EdgeInsets.symmetric(horizontal: 40.0),
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center, // Pusatkan item di dalam Column
-            crossAxisAlignment:
-                CrossAxisAlignment.center, // Pusatkan item secara horizontal
+            mainAxisAlignment: MainAxisAlignment.center, // Center items within Column
+            crossAxisAlignment: CrossAxisAlignment.center, // Center items horizontally
             children: [
               // Logo
-              // Pastikan 'assets/images/logo.png' adalah representasi yang benar dari logo Figma
+              // Ensure 'assets/images/logo.png' is the correct representation from Figma
               SvgPicture.asset('assets/images/logo.svg',
                   semanticsLabel: 'NetrAI Logo'),
               const SizedBox(
-                height:
-                    24, // Jarak antara logo dan teks (sesuaikan jika perlu berdasarkan Figma)
+                height: 24, // Spacing between logo and text (adjust if needed based on Figma)
               ),
-              // Teks
+              // Text
               Text(
                 'Helping you navigate daily life with confidence.',
-                textAlign: TextAlign.center, // Sesuai Figma
+                textAlign: TextAlign.center, // As per Figma
                 style: TextStyle(
-                  color: Colors.white, // Sesuai Figma (#FFFFFF)
-                  fontSize: 16, // Sesuai Figma
-                  fontWeight: FontWeight.w500, // Sesuai Figma
-                  fontFamily: 'Inter', // Sesuai Figma
-                  // letterSpacing: -0.3, // Dihapus, tidak ada di spesifikasi Figma node ini
-                  height: 1.5, // Sesuai Figma (lineHeight 1.5em)
+                  color: Colors.white, // As per Figma (#FFFFFF)
+                  fontSize: 16, // As per Figma
+                  fontWeight: FontWeight.w500, // As per Figma
+                  fontFamily: 'Inter', // As per Figma
+                  // letterSpacing: -0.3, // Removed, not in this Figma node's specs
+                  height: 1.5, // As per Figma (lineHeight 1.5em)
                 ),
               ),
             ],

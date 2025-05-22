@@ -1,40 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart'; // Untuk SystemUiOverlayStyle
-// import 'package:netrai/screens/settings_screen.dart'; // <-- Komentari impor SettingsScreen
-// import 'package:netrai/screens/account_screen.dart'; // <-- Komentari impor AccountScreen
+import 'package:flutter/services.dart'; // For SystemUiOverlayStyle
+// import 'package:netrai/screens/settings_screen.dart'; // <-- SettingsScreen import commented out
+// import 'package:netrai/screens/account_screen.dart'; // <-- AccountScreen import commented out
 
-// Stateless Widget untuk tampilan Home (fokus pada tab View)
+// StatelessWidget for Home screen (focused on View tab)
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Warna dari Figma
+    // Colors from Figma
     const Color primaryBlue = Color(0xFF3A58D0);
     const Color primaryWhite = Colors.white;
-    const Color inactiveGrey = Color(0xFFB5C0ED); // Warna teks nav tidak aktif
-    const Color bodyBackground = Colors.black; // Asumsi BG gelap untuk kamera
+    // const Color inactiveGrey = Color(0xFFB5C0ED); // Unused: Inactive nav text color
+    const Color bodyBackground = Colors.black; // Assuming dark background for camera view
 
-    // Atur status bar agar cocok dengan AppBar biru
+    // Set status bar to match blue AppBar
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: primaryBlue,
-        statusBarIconBrightness: Brightness.light, // Ikon putih di status bar
+        statusBarIconBrightness: Brightness.light, // White icons on status bar
       ),
     );
 
     return Scaffold(
-      backgroundColor: bodyBackground, // Latar belakang body gelap
+      backgroundColor: bodyBackground, // Dark body background
       appBar: AppBar(
         backgroundColor: primaryBlue,
         elevation: 0,
-        automaticallyImplyLeading: false, // Tidak ada tombol back
+        automaticallyImplyLeading: false, // No back button
         title: const Text(
           'View',
           style: TextStyle(
             color: primaryWhite,
-            fontSize: 18, // Sesuaikan ukuran jika perlu
+            fontSize: 18, // Adjust size if needed
             fontWeight: FontWeight.w500, // Medium
             fontFamily: 'Inter',
           ),
@@ -47,33 +47,32 @@ class HomeScreen extends StatelessWidget {
               height: 24,
             ),
             onPressed: () {
-              // TODO: Ganti dengan navigasi ke HelpScreen jika sudah ada
-              print('Tombol Bantuan ditekan - Navigasi belum diatur');
+              // TODO: Replace with navigation to HelpScreen if available
+              print('Help button pressed - Navigation not set yet');
             },
             tooltip: 'Help',
           ),
           IconButton(
             icon: const Icon(
-              Icons.account_circle, // Placeholder ikon profil
-              color: primaryWhite, // Warna putih
-              size: 28, // Sesuaikan ukuran jika perlu
+              Icons.account_circle, // Placeholder profile icon
+              color: primaryWhite, // White color
+              size: 28, // Adjust size if needed
             ),
             onPressed: () {
-              // Navigasi ke halaman akun
-              print(
-                  'Tombol Akun ditekan - Navigasi ke AccountScreen (DIKOMENTARI SEMENTARA)');
+              // Navigate to account page
+              print('Account button pressed - Navigation to AccountScreen (COMMENTED OUT)');
               // Navigator.push(
               //   context,
               //   MaterialPageRoute(
               //     builder:
               //         (context) =>
-              //             AccountScreen(), // << Komentari Navigasi ke AccountScreen
+              //             AccountScreen(), // << Commented out AccountScreen Navigation
               //   ),
               // );
             },
             tooltip: 'Account',
           ),
-          const SizedBox(width: 8), // Jarak di ujung kanan
+          const SizedBox(width: 8), // Spacing at the right end
         ],
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: primaryBlue,
@@ -81,46 +80,44 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       body: Stack(
-        // Gunakan Stack untuk menumpuk elemen
+        // Use Stack to layer elements
         alignment: Alignment.center,
         children: [
-          // --- Placeholder untuk Kamera View ---
-          // Ini bisa diganti dengan widget CameraPreview nanti
+          // --- Placeholder for Camera View ---
+          // This can be replaced with CameraPreview widget later
           Container(
-            color: bodyBackground, // Warna latar belakang hitam/gelap
-            // Mungkin tambahkan ikon video di tengah sebagai placeholder awal
+            color: bodyBackground, // Black/dark background color
+            // Optional: Add a video icon in the center as an initial placeholder
             // child: Center(
             //   child: SvgPicture.asset(
-            //     'assets/icons/video_placeholder.svg', // Ganti dengan ikon video jika ada
+            //     'assets/icons/video_placeholder.svg', // Replace with video icon if available
             //     width: 100,
             //     colorFilter: ColorFilter.mode(Colors.grey.shade800, BlendMode.srcIn),
             //   ),
             // ),
           ),
 
-          // --- Tombol Aksi di Bawah ---
-          // Gunakan Align untuk menempatkan grup tombol
+          // --- Action Buttons at the Bottom ---
+          // Use Align to position the button group
           Align(
-            alignment: Alignment
-                .bottomCenter, // Align ke bawah tengah secara keseluruhan
+            alignment: Alignment.bottomCenter, // Align to bottom center overall
             child: Padding(
               padding: const EdgeInsets.only(
                 bottom: 30.0,
                 left: 20,
                 right: 20,
-              ), // Padding dari tepi bawah dan samping
+              ), // Padding from bottom and sides
               child: Stack(
-                // Stack untuk menumpuk tombol tengah dan tombol kanan
-                alignment: Alignment
-                    .bottomCenter, // Align item dalam stack ke bawah tengah
+                // Stack to layer center button and right buttons
+                alignment: Alignment.bottomCenter, // Align items in stack to bottom center
                 children: [
-                  // Tombol "Speak to NetrAI" (di tengah)
+                  // "Speak to NetrAI" button (center)
                   Padding(
-                    // Beri sedikit padding bawah agar tidak tertutup tombol bulat jika overlap
+                    // Add a little bottom padding so it's not obscured by circular buttons if they overlap
                     padding: const EdgeInsets.only(bottom: 0),
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        print('Tombol Speak to NetrAI ditekan');
+                        // print('Speak to NetrAI button pressed'); // Debug log
                       },
                       icon: SvgPicture.asset(
                         'assets/icons/mic_icon_white.svg',
@@ -149,33 +146,28 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Tombol Bulat di Kanan Bawah
+                  // Circular Buttons on the Bottom Right
                   Align(
                     alignment: Alignment.bottomRight,
                     child: Column(
-                      mainAxisSize:
-                          MainAxisSize.min, // Ukuran column sesuai isi
+                      mainAxisSize: MainAxisSize.min, // Column size to fit content
                       children: [
                         _buildCircularButton(
-                          iconPath:
-                              'assets/icons/switch_camera_icon_white.svg', // Switch di atas
+                          iconPath: 'assets/icons/switch_camera_icon_white.svg', // Switch camera icon (top)
                           onPressed: () {
-                            print('Tombol Switch Kamera ditekan');
+                            // print('Switch Camera button pressed'); // Debug log
                           },
                           buttonColor: primaryBlue,
                         ),
-                        const SizedBox(
-                          height: 15,
-                        ), // Jarak vertikal antar tombol bulat
+                        const SizedBox(height: 15), // Vertical spacing between circular buttons
                         _buildCircularButton(
-                          iconPath:
-                              'assets/icons/camera_icon_white.svg', // Kamera di bawah
+                          iconPath: 'assets/icons/camera_icon_white.svg', // Camera icon (bottom)
                           onPressed: () {
-                            print('Tombol Kamera ditekan');
+                            // print('Camera button pressed'); // Debug log
                           },
                           buttonColor: primaryBlue,
                         ),
-                        // Tambahkan SizedBox kecil di bawah jika perlu agar sejajar dgn tombol Speak
+                        // Add a small SizedBox at the bottom if needed to align with Speak button
                         const SizedBox(height: 5),
                       ],
                     ),
@@ -189,7 +181,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Helper widget untuk tombol bulat
+  // Helper widget for circular buttons
   Widget _buildCircularButton({
     required String iconPath,
     required VoidCallback onPressed,
@@ -197,10 +189,10 @@ class HomeScreen extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: buttonColor.withOpacity(0.8), // Gunakan parameter warna
+        color: buttonColor.withOpacity(0.8), // Use buttonColor parameter
         shape: BoxShape.circle,
         boxShadow: [
-          // Opsi shadow jika diperlukan
+          // Optional shadow
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
             blurRadius: 5,
@@ -211,19 +203,17 @@ class HomeScreen extends StatelessWidget {
       child: IconButton(
         icon: SvgPicture.asset(
           iconPath,
-          width: 24, // Ukuran ikon di dalam tombol
+          width: 24, // Icon size inside button
           height: 24,
           colorFilter: const ColorFilter.mode(
-            Colors.white,
+            Colors.white, // Ensure icon is white
             BlendMode.srcIn,
-          ), // Pastikan ikon putih
+          ),
         ),
         onPressed: onPressed,
-        padding: const EdgeInsets.all(
-          15,
-        ), // Padding untuk memperbesar area tekan
-        visualDensity: VisualDensity.compact, // Rapatkan padding internal
-        color: Colors.white, // Warna ripple effect (opsional)
+        padding: const EdgeInsets.all(15), // Padding to increase tap area
+        visualDensity: VisualDensity.compact, // Compact internal padding
+        color: Colors.white, // Ripple effect color (optional)
       ),
     );
   }

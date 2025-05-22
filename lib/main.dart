@@ -1,37 +1,38 @@
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-// NOTE: Pastikan menggunakan livekit_client versi terbaru (minimal 1.4.0) untuk dukungan screen sharing yang lebih baik
-// Jika masih terjadi crash, periksa pubspec.yaml dan pastikan menggunakan versi yang kompatibel
+// NOTE: Ensure using the latest livekit_client version (at least 1.4.0) for better screen sharing support.
+// If crashes still occur, check pubspec.yaml and ensure a compatible version is used.
 import 'package:livekit_client/livekit_client.dart';
 import 'package:livekit_components/livekit_components.dart'
     show RoomContext, VideoTrackRenderer, MediaDeviceContext;
 import 'package:provider/provider.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Tambahkan import ini
-import 'dart:io'; // Import untuk Platform
-// import 'package:torch_light/torch_light.dart'; // Hapus import torch_light
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import
+import 'dart:io'; // Import for Platform
+// import 'package:torch_light/torch_light.dart'; // Remove torch_light import
 import './widgets/control_bar.dart';
 import './services/token_service.dart';
 import 'widgets/agent_status.dart';
-import './utils/screen_share_helper.dart'; // Import helper baru
+import './utils/screen_share_helper.dart'; // Import new helper
 import './utils/netrai_speech_helper.dart'; // Import NetraiSpeechHelper
 import 'package:flutter_foreground_task/flutter_foreground_task.dart'; // Import foreground task
-// Ganti impor dari HistoryScreen ke TranscriptionScreen
+import 'services/connection_service.dart'; // Import ConnectionService
+// Replace import from HistoryScreen to TranscriptionScreen
 import './screens/transcription_screen.dart'; // Updated import
-// Import layar lain yang diperlukan untuk routes
-import './screens/splash_screen.dart'; // Asumsi path ini benar
-import './screens/welcome_screen.dart'; // Asumsi path ini benar
-import './screens/privacy_policy_screen.dart'; // Asumsi path ini benar
+// Import other screens needed for routes
+import './screens/splash_screen.dart'; // Assuming this path is correct
+import './screens/welcome_screen.dart'; // Assuming this path is correct
+import './screens/privacy_policy_screen.dart'; // Assuming this path is correct
 import './screens/contact_us_screen.dart'; // <-- Add import for ContactUsScreen
 import './screens/account_screen.dart'; // <-- Add import for AccountScreen
 import './screens/location_screen.dart'; // <-- Add import for LocationScreen
-import './widgets/connection_indicator.dart'; // <-- Tambahkan import untuk ConnectionQualityIndicator
+import './widgets/connection_indicator.dart'; // <-- Add import for ConnectionQualityIndicator
 
 // Import Firebase Core
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // Import firebase_options.dart
-import 'package:firebase_auth/firebase_auth.dart'; // Tambahkan impor ini
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import
 import './utils/overlay_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
@@ -39,18 +40,18 @@ import 'dart:async';
 // Load environment variables before starting the app
 // This is used to configure the LiveKit sandbox ID for development
 void main() async {
-  // Pastikan Flutter binding diinisialisasi sebelum memuat env atau menjalankan app
+  // Ensure Flutter binding is initialized before loading env or running app
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
-  // ---- INISIALISASI FOREGROUND TASK UNTUK SCREEN SHARING ----
-  // Konfigurasi foreground task untuk media projection
-  // Void function tidak perlu await
+  // ---- INITIALIZE FOREGROUND TASK FOR SCREEN SHARING ----
+  // Configure foreground task for media projection
+  // Void function does not need await
   FlutterForegroundTask.init(
     androidNotificationOptions: AndroidNotificationOptions(
       channelId: 'netrai_foreground_task',
       channelName: 'NetrAI Screen Sharing',
-      channelDescription: 'Notification untuk berbagi layar',
+      channelDescription: 'Notification for screen sharing', // Translated
       channelImportance: NotificationChannelImportance.HIGH,
       priority: NotificationPriority.HIGH,
       onlyAlertOnce: true,
@@ -69,20 +70,19 @@ void main() async {
   );
   // ---------------------------------------------------------
 
-  // ---- INISIALISASI OVERLAY SERVICE UNTUK FLOATING BUTTON ----
+  // ---- INITIALIZE OVERLAY SERVICE FOR FLOATING BUTTON ----
   await OverlayService.initialize();
   // ---------------------------------------------------------
 
-  // ---- INISIALISASI FIREBASE MENGGUNAKAN FIREBASE OPTIONS ----
+  // ---- INITIALIZE FIREBASE USING FIREBASE OPTIONS ----
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print(
-        "Firebase berhasil diinisialisasi menggunakan DefaultFirebaseOptions.");
-  } catch (e) {
-    print("Gagal inisialisasi Firebase: $e");
-    // Handle error jika perlu (misalnya tampilkan pesan error)
+    // print("Firebase successfully initialized using DefaultFirebaseOptions."); // Removed less critical log
+  } catch (e, st) { // Added stack trace to log
+    print("Failed to initialize Firebase: $e\nStack: $st"); // Keep error log
+    // Handle error if needed (e.g., show error message)
   }
   // -----------------------------------------------
 
@@ -95,7 +95,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Bungkus dengan WithForegroundTask untuk mendukung screen sharing di Android
+    // Wrap with WithForegroundTask to support screen sharing on Android
     return WithForegroundTask(
       child: MaterialApp(
         title: 'AI Assistant',
@@ -116,17 +116,17 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         themeMode: ThemeMode.system,
-        // home: const VoiceAssistant(), // Baris ini diganti
-        home: const SplashScreen(), // Layar awal adalah SplashScreen
+        // home: const VoiceAssistant(), // This line is replaced
+        home: const SplashScreen(), // Initial screen is SplashScreen
         routes: {
           '/splash': (context) => const SplashScreen(),
           '/welcome': (context) => const WelcomeScreen(),
           '/privacy': (context) => const PrivacyPolicyScreen(),
           '/main': (context) =>
-              const VoiceAssistant(), // Rute ke VoiceAssistant di main.dart
+              const VoiceAssistant(), // Route to VoiceAssistant in main.dart
           '/location': (context) =>
               const LocationScreen(), // <-- Add route for LocationScreen
-          // '/voice': (context) => const VoiceAssistant(), // Rute ini sekarang sama dengan /main
+          // '/voice': (context) => const VoiceAssistant(), // This route is now the same as /main
         },
       ),
     );
@@ -141,53 +141,38 @@ class VoiceAssistant extends StatefulWidget {
   State<VoiceAssistant> createState() => _VoiceAssistantState();
 }
 
-// Jadikan _VoiceAssistantState sebagai WidgetsBindingObserver
+// Make _VoiceAssistantState a WidgetsBindingObserver
 class _VoiceAssistantState extends State<VoiceAssistant>
     with WidgetsBindingObserver {
   // Track current camera position
   CameraPosition _currentCameraPosition = CameraPosition.back;
-  // State untuk melacak proses koneksi otomatis
-  bool _isConnecting = false;
-  // State untuk menandai bahwa widget siap memulai koneksi (setelah frame pertama)
-  bool _isReadyToConnect = false;
-  // Flag untuk menyimpan status izin
-  bool _permissionsGranted = false;
-  // Cache untuk token dan URL server
-  String? _cachedToken;
-  String? _cachedServerUrl;
-  DateTime? _tokenExpiryTime;
-  // Variabel untuk menyimpan nama room dan participant terakhir
-  String? _lastRoomName;
-  String? _lastParticipantName;
+  // ConnectionService instance
+  late ConnectionService _connectionService;
+  StreamSubscription? _connectionServiceStatusSubscription;
 
-  // TAMBAH: Variabel untuk animasi fade transisi
+  // UI specific state
   bool _showAgentVisualizer = false;
   bool _showLoadingIndicator = false;
   double _agentVisualizerOpacity = 0.0;
+  String _uiConnectionStatus = 'Initializing...'; // For UI display
 
-  // TAMBAH: Variabel untuk status koneksi yang informatif
-  String _connectionStatus = 'Mempersiapkan koneksi...';
-  // TAMBAH: Timer untuk timeout koneksi
-  Timer? _connectionTimeoutTimer;
-
-  // Tambahkan semaphore untuk mencegah permintaan izin bersamaan
+  // Flag untuk menyimpan status izin (mungkin masih berguna untuk UI/UX di luar koneksi)
+  bool _permissionsGranted = false;
+  // Tambahkan semaphore untuk mencegah permintaan izin bersamaan (jika masih ada logika izin di UI)
   bool _isRequestingPermissions = false;
-  // Flag untuk melacak apakah sudah mencoba meminta izin
+  // Flag untuk melacak apakah sudah mencoba meminta izin (jika masih ada logika izin di UI)
   bool _hasTriedRequestingPermissions = false;
 
-  // Tambahkan variabel-variabel baru untuk monitoring koneksi
-  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
-  bool _wasConnectedBefore = false;
-  bool _isInternetAvailable = true;
-  int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 5;
-  Timer? _reconnectTimer;
+  // Firebase User
+  User? _currentUser;
+  StreamSubscription<User?>? _authSubscription;
 
-  // Tambahkan EventsListener untuk RoomEvent
+  // Tambahkan EventsListener untuk RoomEvent (untuk event yang tidak ditangani ConnectionService)
   late EventsListener<RoomEvent> _listener;
 
   // Create a LiveKit Room instance with audio visualization enabled and optimized options
   // This is the main object that manages the connection to LiveKit
+  // ConnectionService will manage the room's connection state.
   final room = Room(
     roomOptions: const RoomOptions(
       enableVisualizer: true,
@@ -210,43 +195,90 @@ class _VoiceAssistantState extends State<VoiceAssistant>
     WidgetsBinding.instance
         .addObserver(this); // Tambahkan observer siklus hidup
 
+    // Initialize TokenService (assuming it's available via Provider or direct instantiation)
+    // We'll get it from context later if using Provider
+    final tokenService = TokenService(); // Or context.read<TokenService>() if already provided higher up
+
+    _connectionService = ConnectionService(
+        room,
+        tokenService,
+        initialServerUrl: dotenv.env['LIVEKIT_URL'] // Pass initial URL if available
+    );
+
+    _connectionServiceStatusSubscription = _connectionService.statusStream.listen((statusUpdate) { // Updated to ConnectionStatusUpdate
+      if (mounted) {
+        setState(() {
+          _uiConnectionStatus = statusUpdate.message ?? statusUpdate.state.toString(); // Default message or state name
+
+          switch (statusUpdate.state) {
+            case ConnectionStateUpdate.connecting:
+            case ConnectionStateUpdate.tokenFetching:
+            case ConnectionStateUpdate.reconnecting:
+            case ConnectionStateUpdate.permissionRequired:
+              _showLoadingIndicator = true;
+              break;
+            case ConnectionStateUpdate.connected:
+              _showAgentVisualizer = true;
+              _agentVisualizerOpacity = 1.0;
+              _showLoadingIndicator = false;
+              break;
+            case ConnectionStateUpdate.disconnected:
+            case ConnectionStateUpdate.initial: // Or handle as needed
+              _showAgentVisualizer = false;
+              _agentVisualizerOpacity = 0.0;
+              _showLoadingIndicator = false;
+              break;
+            case ConnectionStateUpdate.error:
+              _showAgentVisualizer = false;
+              _agentVisualizerOpacity = 0.0;
+              _showLoadingIndicator = false;
+              _showErrorSnackBar(statusUpdate.errorType, statusUpdate.message);
+              break;
+          }
+        });
+      }
+    });
+
+    // Firebase Auth User
+    _currentUser = FirebaseAuth.instance.currentUser;
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+        });
+      }
+    });
+
     // Inisialisasi komunikasi foreground task
     _initForegroundTaskHandler();
 
     // Set callback untuk NetraiSpeechHelper
     _initNetRAISpeechHelper();
 
-    // Pre-initialize media devices and check permissions early
-    _checkPermissionsEarly();
+    // Pre-initialize media devices (permissions are handled by ConnectionService initially)
+    // _checkPermissionsEarly(); // ConnectionService will handle initial permission checks.
+                             // UI might still need a way to re-request if denied.
     _preconfigureMediaDevices();
 
     // Pra-inisialisasi visualizer audio
     _preInitializeVisualizer();
 
-    // Generate room and participant names once and reuse them
-    _generateRoomAndParticipantNames();
-
-    // TAMBAH: Pre-fetch token jika memungkinkan
-    _preFetchConnectionToken();
+    // Generate room and participant names (ConnectionService will use them or generate its own)
+    // _generateRoomAndParticipantNames(); // ConnectionService handles this if names are passed to connect()
 
     // Panggil auto connect setelah frame pertama selesai dibangun
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print("[addPostFrameCallback] Memulai callback setelah frame pertama");
-      print("[addPostFrameCallback] Menandai siap untuk koneksi...");
-      if (mounted) {
-        setState(() {
-          _isReadyToConnect = true;
-        });
-      }
+      // Initiate connection through ConnectionService
+      // You can pass specific room/participant names or let ConnectionService use its defaults/generation
+      _connectionService.connect(roomName: "default-room", participantName: "default-user");
     });
 
-    // Inisialisasi koneksi monitoring
-    _setupConnectivityMonitor();
+    // _setupConnectivityMonitor(); // ConnectionService has its own.
 
-    // Inisialisasi event listener
+    // Inisialisasi event listener FOR UI/non-connection events if any
     _listener = room.createListener();
-    // Setup event listeners
-    _setupEventListeners();
+    _setupUIEventListeners(); // Renamed to reflect it's for UI specific event handling now
 
     print("[initState] Selesai initState");
   }
@@ -269,55 +301,39 @@ class _VoiceAssistantState extends State<VoiceAssistant>
       // Ambil RoomContext dari provider
       final roomCtx = Provider.of<RoomContext>(context, listen: false);
 
-      // Logika untuk mengaktifkan fitur NetrAI
       print("[_initNetRAISpeechHelper] Memulai Speak to NetrAI");
-
-      // Aktifkan kamera dan mikrofon
-      if (roomCtx.room.localParticipant != null) {
-        // Pastikan mikrofon aktif
-        roomCtx.room.localParticipant?.setMicrophoneEnabled(true);
-
-        // Bisa menambahkan logika lain sesuai kebutuhan fitur NetrAI
-        // Misalnya mengirimkan sinyal ke server bahwa pengguna ingin berbicara ke NetrAI
-
-        // Tunjukkan pesan untuk pengguna
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('NetrAI mendengarkan...'),
-            duration: Duration(seconds: 3),
-          ),
-        );
+      try {
+        // Aktifkan kamera dan mikrofon
+        if (roomCtx.room.localParticipant != null) {
+          roomCtx.room.localParticipant?.setMicrophoneEnabled(true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('NetrAI mendengarkan...'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else {
+          print("[_initNetRAISpeechHelper] Local participant is null.");
+           _showErrorSnackBar(null, "Could not activate microphone: participant not available.");
+        }
+      } on ProviderNotFoundException catch (e, st) {
+        print("[_initNetRAISpeechHelper] Error: ProviderNotFoundException - $e\nStack: $st");
+        _showErrorSnackBar(null, "Error setting up NetrAI feature.");
+      } catch (e, st) {
+        print("[_initNetRAISpeechHelper] Error enabling microphone for NetrAI: $e\nStack: $st");
+        _showErrorSnackBar(null, "Could not activate microphone for NetrAI.");
       }
     });
   }
 
-  // Generate random room and participant names once
-  void _generateRoomAndParticipantNames() {
-    _lastRoomName =
-        'room-${(1000 + DateTime.now().millisecondsSinceEpoch % 9000)}';
-    _lastParticipantName =
-        'user-${(1000 + DateTime.now().millisecondsSinceEpoch % 9000)}';
-    print(
-        "[_generateRoomAndParticipantNames] Generated Room: $_lastRoomName, Participant: $_lastParticipantName");
-  }
+  // _generateRoomAndParticipantNames() // MOVED to ConnectionService or handled by passing params to connect()
 
-  // Pre-check permissions early to avoid delay during connect
-  Future<void> _checkPermissionsEarly() async {
-    print("[_checkPermissionsEarly] Memeriksa izin di awal aplikasi...");
-
-    // Cek apakah sudah pernah meminta izin sebelumnya
-    if (_hasTriedRequestingPermissions) {
-      print(
-          "[_checkPermissionsEarly] Sudah pernah meminta izin sebelumnya, melewati permintaan ulang");
-      return;
-    }
-
-    _permissionsGranted = await _requestPermissions();
-    print(
-        "[_checkPermissionsEarly] Hasil pemeriksaan izin awal: $_permissionsGranted");
-  }
+  // _checkPermissionsEarly() // MOVED/HANDLED by ConnectionService.
+  // UI might need its own _requestPermissions if user needs to trigger it manually.
+  // For now, assuming ConnectionService handles initial permission request.
 
   // Preconfigure media devices to "warm up" WebRTC subsystem
+  // This can remain if it's generic and not tied to connection state specifically.
   Future<void> _preconfigureMediaDevices() async {
     print(
         "[_preconfigureMediaDevices] Memulai prekonfigurasi perangkat media...");
@@ -341,697 +357,235 @@ class _VoiceAssistantState extends State<VoiceAssistant>
         }
       };
 
-      // Get and release media stream to "warm up" the subsystem
       final stream = await navigator.mediaDevices.getUserMedia(constraints);
-      // Langsung lepaskan stream setelah inisialisasi
       stream.getTracks().forEach((track) => track.stop());
-
-      print(
-          "[_preconfigureMediaDevices] Perangkat media berhasil dikonfigurasi untuk koneksi lebih cepat");
-    } catch (e) {
-      print(
-          "[_preconfigureMediaDevices] Error saat prekonfigurasi perangkat media: $e");
-      // Continue without preconfiguration - no need to show error
+      print("[_preconfigureMediaDevices] Perangkat media berhasil dikonfigurasi.");
+    } on PlatformException catch (e, st) {
+      print("[_preconfigureMediaDevices] PlatformException saat prekonfigurasi perangkat media: ${e.message}\nStack: $st");
+      // Optionally show a subtle error or log, as this is non-critical.
+      // _showErrorSnackBar(ErrorType.mediaInitialization, "Could not pre-initialize media devices.");
+    } catch (e, st) {
+      print("[_preconfigureMediaDevices] Error saat prekonfigurasi perangkat media: $e\nStack: $st");
+      // _showErrorSnackBar(ErrorType.mediaInitialization, "Could not pre-initialize media devices.");
     }
   }
 
-  // Metode baru untuk pra-inisialisasi visualizer
   Future<void> _preInitializeVisualizer() async {
-    print(
-        "[_preInitializeVisualizer] Memulai pra-inisialisasi visualizer audio");
+    print("[_preInitializeVisualizer] Memulai pra-inisialisasi visualizer audio");
     try {
-      // Pastikan visualizer diaktifkan melalui RoomOptions
-      // Opsi ini sudah diatur saat inisialisasi Room di bagian atas class ini:
-      // RoomOptions(enableVisualizer: true)
-
-      // Aktifkan audio level observers lebih awal
-      // LiveKit menggunakan EventsListener internal untuk visualizer
-      // Ciptakan dan tambahkan listener pada Room
       final preVisualListener = room.createListener();
-
-      // Dengarkan event koneksi untuk memastikan visualizer bekerja saat terhubung
       preVisualListener.on<RoomConnectedEvent>((event) {
-        print(
-            "[_preInitializeVisualizer] Room terhubung, memastikan visualizer aktif");
-        // LiveKit akan otomatis memulai visualizer setelah terhubung
+        print("[_preInitializeVisualizer] Room terhubung (via service), memastikan visualizer aktif");
       });
-
-      print(
-          "[_preInitializeVisualizer] Visualizer audio listener diinisialisasi awal");
-    } catch (e) {
-      print(
-          "[_preInitializeVisualizer] Error saat pra-inisialisasi visualizer: $e");
-      // Lanjutkan meskipun ada error pada pra-inisialisasi
+      print("[_preInitializeVisualizer] Visualizer audio listener diinisialisasi awal.");
+    } catch (e, st) {
+      print("[_preInitializeVisualizer] Error saat pra-inisialisasi visualizer: $e\nStack: $st");
+      // This is likely non-critical, so logging might be sufficient.
     }
   }
 
-  void _setupEventListeners() {
+  // Renamed from _setupEventListeners to _setupUIEventListeners
+  // This should now only handle UI-specific LiveKit events or other UI events.
+  // Connection-related events (connect, disconnect, reconnect attempts) are handled by ConnectionService.
+  void _setupUIEventListeners() {
     _listener
-      ..on<RoomDisconnectedEvent>((event) {
-        print('[RoomListener] Room disconnected: ${event.reason}');
-        if (_wasConnectedBefore && _isInternetAvailable) {
-          print(
-              '[RoomListener] Terdeteksi koneksi terputus, akan mencoba reconnect otomatis');
-          _wasConnectedBefore = true;
-        }
+      // Example: Listen for local track publication events if UI needs to react
+      .on<LocalTrackPublishedEvent>((event) {
+        print('[UIEventListener] Local track published: ${event.publication.source}');
+        // Update UI if necessary based on track publications
+        if (mounted) setState(() {});
       })
-      ..on<RoomAttemptReconnectEvent>((event) {
-        print(
-            '[RoomListener] Mencoba reconnect ${event.attempt}/${event.maxAttemptsRetry}, '
-            '(${event.nextRetryDelaysInMs}ms delay sampai percobaan berikutnya)');
-
-        // Reset timer reconnect jika ada
-        if (_reconnectTimer != null && _reconnectTimer!.isActive) {
-          _reconnectTimer!.cancel();
-        }
-
-        // Jika sudah mencapai batas percobaan, berhenti mencoba
-        if (event.attempt >= _maxReconnectAttempts) {
-          print("[RoomListener] Mencapai batas maksimum percobaan reconnect");
-          _resetReconnectState();
-          return;
-        }
-
-        // Jika masih bisa mencoba dan internet tersedia
-        if (_isInternetAvailable && mounted) {
-          setState(() {
-            _reconnectAttempts = event.attempt;
-          });
-
-          // Jika koneksi gagal setelah beberapa detik, coba manual reconnect
-          _reconnectTimer =
-              Timer(Duration(milliseconds: event.nextRetryDelaysInMs), () {
-            if (mounted && room.connectionState != ConnectionState.connected) {
-              print(
-                  "[RoomListener] Timer reconnect triggered, mencoba manual reconnect");
-              _attemptManualReconnect();
-            }
-          });
-        }
+      .on<LocalTrackUnpublishedEvent>((event) {
+        print('[UIEventListener] Local track unpublished: ${event.publication.source}');
+        if (mounted) setState(() {});
       })
-      ..on<RoomConnectedEvent>((event) {
-        print('[RoomListener] Room connected');
-        _wasConnectedBefore = true;
-        _resetReconnectState();
-      })
-      // TAMBAH: Event listener untuk update koneksi
-      ..on<TrackSubscriptionPermissionChangedEvent>((event) {
-        // Update status koneksi berdasarkan status subscription
-        if (_isConnecting && mounted) {
-          setState(() {
-            _connectionStatus = "Menyiapkan video...";
-          });
-        }
-      })
-      // PERBAIKAN: Monitor perubahan data room untuk update status koneksi
-      ..on<ParticipantConnectedEvent>((event) {
-        if (_isConnecting && mounted) {
-          // Jika participant terhubung, periksa kualitas koneksi
-          final quality = event.participant.connectionQuality;
-          setState(() {
-            _updateConnectionStatus(quality);
-          });
-        }
-      });
+      // TAMBAH: Event listener untuk update koneksi (jika masih relevan untuk UI selain status string)
+      // .on<TrackSubscriptionPermissionChangedEvent>((event) {
+      //   // Update status koneksi berdasarkan status subscription
+      //   if (_connectionService.isConnecting && mounted) { // Check against ConnectionService state
+      //     // setState(() {
+      //     //   _uiConnectionStatus = "Menyiapkan video..."; // Or let ConnectionService handle this
+      //     // });
+      //   }
+      // })
+      // PERBAIKAN: Monitor perubahan data room untuk update status koneksi (jika masih relevan untuk UI)
+      // .on<ParticipantConnectedEvent>((event) {
+      //   // if (_connectionService.isConnecting && mounted) { // Check against ConnectionService state
+      //   //   final quality = event.participant.connectionQuality;
+      //   //   // setState(() {
+      //   //   //   _updateConnectionStatus(quality); // This method was removed
+      //   //   // });
+      //   // }
+      // });
+      ; // Add other UI relevant listeners here
 
-    // Tambahkan timer untuk polling status koneksi
-    if (mounted) {
-      Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (mounted && _isConnecting && room.localParticipant != null) {
-          final quality = room.localParticipant!.connectionQuality;
-          setState(() {
-            _updateConnectionStatus(quality);
-          });
-        } else if (!_isConnecting) {
-          timer.cancel();
-        }
-      });
-    }
+    // Timer for polling status that ConnectionService might not cover, if any.
+    // For example, if UI needs to react to participant quality independently of general connection status.
+    // if (mounted) {
+    //   Timer.periodic(const Duration(seconds: 1), (timer) {
+    //     if (mounted && room.isConnected && room.localParticipant != null) { // Check room.isConnected directly
+    //       final quality = room.localParticipant!.connectionQuality;
+    //       // Potentially update some UI element based on quality, if not covered by _uiConnectionStatus
+    //     }
+    //   });
+    // }
   }
 
-  // Helper untuk memperbarui status koneksi berdasarkan quality
-  void _updateConnectionStatus(ConnectionQuality quality) {
-    switch (quality) {
-      case ConnectionQuality.unknown:
-        _connectionStatus = "Menghubungkan...";
-        break;
-      case ConnectionQuality.poor:
-        _connectionStatus = "Koneksi lambat...";
-        break;
-      case ConnectionQuality.good:
-      case ConnectionQuality.excellent:
-        _connectionStatus = "Hampir siap...";
-        break;
-      default: // Menangani case ConnectionQuality.lost dan nilai baru yang mungkin ditambahkan
-        _connectionStatus = "Koneksi tidak stabil...";
-        break;
-    }
-  }
-
-  // Metode untuk mencoba manual reconnect jika auto reconnect LiveKit gagal
-  void _attemptManualReconnect() {
-    if (mounted &&
-        !_isConnecting &&
-        room.connectionState != ConnectionState.connected) {
-      final roomCtx = Provider.of<RoomContext>(context, listen: false);
-      final tkService = Provider.of<TokenService>(context, listen: false);
-
-      print("[RoomListener] Mencoba manual reconnect");
-      _autoConnect(roomCtx, tkService);
-    }
-  }
-
-  // Tambahkan metode ini untuk monitoring koneksi
-  void _setupConnectivityMonitor() {
-    print("[_setupConnectivityMonitor] Memulai monitoring koneksi internet");
-
-    // Cek status koneksi awal
-    Connectivity().checkConnectivity().then((results) {
-      final bool isConnected = results.isNotEmpty &&
-          results.any((result) => result != ConnectivityResult.none);
-      if (mounted) {
-        setState(() {
-          _isInternetAvailable = isConnected;
-        });
-      }
-      print(
-          "[_setupConnectivityMonitor] Status koneksi awal: $_isInternetAvailable (results: $results)");
-    });
-
-    // Monitor perubahan koneksi
-    _connectivitySubscription =
-        Connectivity().onConnectivityChanged.listen((results) {
-      final bool isConnected = results.isNotEmpty &&
-          results.any((result) => result != ConnectivityResult.none);
-
-      print(
-          "[Connectivity] Status koneksi berubah: $results (Internet ${isConnected ? 'tersedia' : 'tidak tersedia'})");
-
-      if (mounted) {
-        setState(() {
-          _isInternetAvailable = isConnected;
-        });
-      }
-
-      // Jika internet terputus, catat status koneksi sebelumnya
-      if (!isConnected) {
-        print(
-            "[Connectivity] Internet terputus, mencatat bahwa sebelumnya terhubung");
-        // Catat bahwa sebelumnya terhubung jika room memang terhubung
-        _wasConnectedBefore = room.connectionState == ConnectionState.connected;
-      }
-      // Jika internet kembali tersedia dan sebelumnya terhubung, perlu mencoba reconnect
-      else if (_wasConnectedBefore &&
-          room.connectionState != ConnectionState.connected) {
-        print(
-            "[Connectivity] Internet kembali tersedia dan sebelumnya terhubung");
-        // LiveKit akan mencoba reconnect otomatis melalui RoomAttemptReconnectEvent
-      }
-    });
-  }
-
-  // Metode untuk reset status reconnect
-  void _resetReconnectState() {
-    _reconnectAttempts = 0;
-    _wasConnectedBefore = room.connectionState == ConnectionState.connected;
-    if (_reconnectTimer != null && _reconnectTimer!.isActive) {
-      _reconnectTimer!.cancel();
-    }
-  }
+  // _updateConnectionStatus // REMOVED (handled by ConnectionService statusStream)
+  // _attemptManualReconnect // REMOVED (use _connectionService.connect() or specific reconnect method if added to service)
+  // _setupConnectivityMonitor // REMOVED (handled by ConnectionService)
+  // _resetReconnectState // REMOVED (handled by ConnectionService)
 
   @override
   void dispose() {
     print("[dispose] VoiceAssistant disposing.");
-    WidgetsBinding.instance.removeObserver(this); // Hapus observer siklus hidup
+    WidgetsBinding.instance.removeObserver(this);
 
-    // Hapus callback foreground task
     FlutterForegroundTask.removeTaskDataCallback((data) {});
 
-    // Dispose room dan listener
     _listener.dispose();
-    room.dispose();
+    // room.dispose(); // ConnectionService might handle room disposal or it might be here.
+                     // For now, assume ConnectionService does not dispose the room passed to it.
+                     // If ConnectionService creates the room, it should dispose it.
+                     // If room is created here and passed, it should be disposed here.
+    room.dispose(); // Keeping room disposal here as it's created in this class.
 
-    // Batalkan subscription connectivity
-    _connectivitySubscription.cancel();
+    _connectionServiceStatusSubscription?.cancel();
+    _connectionService.dispose();
+    _authSubscription?.cancel();
 
-    // Batalkan timer reconnect jika aktif
-    if (_reconnectTimer != null && _reconnectTimer!.isActive) {
-      _reconnectTimer!.cancel();
-    }
-
-    // TAMBAH: Batalkan timer timeout koneksi jika aktif
-    if (_connectionTimeoutTimer != null && _connectionTimeoutTimer!.isActive) {
-      _connectionTimeoutTimer!.cancel();
-    }
+    // _connectivitySubscription.cancel(); // REMOVED
+    // _reconnectTimer?.cancel(); // REMOVED
+    // _connectionTimeoutTimer?.cancel(); // REMOVED
 
     super.dispose();
   }
 
-  // TAMBAH: Method untuk pre-fetch token koneksi
-  Future<void> _preFetchConnectionToken() async {
-    print("[_preFetchConnectionToken] Mencoba pre-fetch token...");
-    if (_lastRoomName != null && _lastParticipantName != null) {
-      try {
-        // Kita tidak bisa langsung menggunakan Provider di initState,
-        // jadi kita jadwalkan dengan Future.microtask
-        Future.microtask(() async {
-          if (!mounted) return;
-          final tkService = Provider.of<TokenService>(context, listen: false);
-          final connectionDetails = await tkService.fetchConnectionDetails(
-            roomName: _lastRoomName!,
-            participantName: _lastParticipantName!,
-          );
-
-          if (connectionDetails != null && mounted) {
-            // Cache token dan URL server
-            _cachedToken = connectionDetails.participantToken;
-            _cachedServerUrl = connectionDetails.serverUrl;
-            // Set waktu kedaluwarsa token (misalnya 1 jam)
-            _tokenExpiryTime = DateTime.now().add(const Duration(hours: 1));
-            print("[_preFetchConnectionToken] Token berhasil di-cache");
-          }
-        });
-      } catch (e) {
-        print("[_preFetchConnectionToken] Error saat pre-fetch token: $e");
-        // Lanjutkan tanpa token cache - akan diambil saat connect
-      }
-    }
-  }
+  // _preFetchConnectionToken // REMOVED (handled by ConnectionService)
 
   /// Meminta izin yang diperlukan (Kamera & Mikrofon) - Dioptimasi untuk kecepatan
+  /// This method might still be useful if the UI wants to allow users to manually trigger permission requests
+  /// outside of the initial connection flow managed by ConnectionService.
   Future<bool> _requestPermissions() async {
-    print("[_requestPermissions] Meminta izin...");
+    print("[_requestPermissions UI] Meminta izin...");
 
     // Cek apakah sudah pernah meminta izin sebelumnya dan diberikan
+    // _permissionsGranted here refers to the local state in _VoiceAssistantState,
+    // which might be used to gate UI features, distinct from ConnectionService's internal permission state.
     if (_permissionsGranted) {
-      print("[_requestPermissions] Izin sudah diberikan sebelumnya");
-      return true;
+      print("[_requestPermissions UI] Izin sudah diberikan sebelumnya (menurut UI state)");
+      // return true; // Or re-check with Permission.microphone.status if needed
     }
 
-    // Cek apakah ada permintaan izin yang sedang berjalan
     if (_isRequestingPermissions) {
-      print(
-          "[_requestPermissions] Ada permintaan izin yang sedang berjalan. Membatalkan permintaan baru.");
-
-      // Tunggu sebentar lalu cek lagi status izin
+      print("[_requestPermissions UI] Ada permintaan izin yang sedang berjalan. Membatalkan permintaan baru.");
       await Future.delayed(const Duration(milliseconds: 500));
-      return _permissionsGranted;
+      return _permissionsGranted; // Return current UI state for permissions
     }
 
-    // Set flag untuk menandai sedang meminta izin
     _isRequestingPermissions = true;
     _hasTriedRequestingPermissions = true;
 
     try {
-      // Untuk Android, minta izin foreground service untuk screen sharing
       if (Platform.isAndroid) {
-        // Android 13+, izin notifikasi diperlukan untuk menampilkan notifikasi foreground service
         final NotificationPermission notificationPermission =
             await FlutterForegroundTask.checkNotificationPermission();
         if (notificationPermission != NotificationPermission.granted) {
           await FlutterForegroundTask.requestNotificationPermission();
         }
-
-        // Android 12+, ada pembatasan untuk memulai foreground service
         if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-          // Fungsi ini memerlukan izin 'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'
           await FlutterForegroundTask.requestIgnoreBatteryOptimization();
         }
       }
 
-      // PERBAIKAN: Minta izin secara paralel untuk lebih cepat
       final List<Future<PermissionStatus>> permissionFutures = [
         Permission.camera.request(),
         Permission.microphone.request(),
       ];
-
       final results = await Future.wait(permissionFutures);
       final cameraGranted = results[0].isGranted;
       final micGranted = results[1].isGranted;
 
-      print(
-          "[_requestPermissions] Hasil: Kamera=$cameraGranted, Mikrofon=$micGranted");
-
-      if (!cameraGranted || !micGranted) {
-        debugPrint(
-            'Izin tidak diberikan: Kamera=$cameraGranted, Mikrofon=$micGranted');
-        // Gunakan context jika widget masih ter-mount (hati-hati jika dipanggil dari initState)
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Izin kamera dan mikrofon diperlukan.')),
-          );
-        }
+      print("[_requestPermissions UI] Hasil: Kamera=$cameraGranted, Mikrofon=$micGranted");
+      
+      if (mounted) {
+        setState(() {
+          _permissionsGranted = cameraGranted && micGranted;
+        });
       }
 
-      return cameraGranted && micGranted;
-    } finally {
-      // Pastikan untuk mengatur flag ke false bahkan jika terjadi error
+      if (!cameraGranted || !micGranted) {
+        debugPrint('[UI] Izin tidak diberikan: Kamera=$cameraGranted, Mikrofon=$micGranted');
+        if (mounted) {
+          _showErrorSnackBar(ErrorType.permissions, 'Camera and microphone permissions are required.');
+        }
+      }
+      return _permissionsGranted;
+    } on PlatformException catch (e, st) {
+      print("[_requestPermissions UI] PlatformException: ${e.message}\nStack: $st");
+      if (mounted) {
+        _showErrorSnackBar(ErrorType.permissions, "Error requesting permissions.");
+        setState(() { _permissionsGranted = false; });
+      }
+      return false;
+    }
+    catch (e, st) {
+      print("[_requestPermissions UI] General Exception: $e\nStack: $st");
+      if (mounted) {
+        _showErrorSnackBar(ErrorType.general, "An error occurred while requesting permissions.");
+        setState(() { _permissionsGranted = false; });
+      }
+      return false;
+    }
+    finally {
       _isRequestingPermissions = false;
     }
   }
 
-  /// Connects to a LiveKit room automatically - Optimized for faster connection
-  Future<void> _autoConnect(RoomContext roomCtx, TokenService tkService) async {
-    // Skip if already connecting
-    if (_isConnecting) {
-      print("[_autoConnect] Proses koneksi sudah berjalan. Membatalkan.");
-      return;
+  void _showErrorSnackBar(ErrorType? errorType, String? defaultMessage) {
+    if (!mounted) return;
+    String message = defaultMessage ?? "An unknown error occurred.";
+
+    switch (errorType) {
+      case ErrorType.network:
+        message = "Network error. Please check your internet connection.";
+        break;
+      case ErrorType.permissions:
+        message = defaultMessage ?? "Permissions denied. Please grant necessary permissions in settings.";
+        break;
+      case ErrorType.server:
+        message = "Server error. Please try again later.";
+        break;
+      case ErrorType.token:
+        message = "Failed to retrieve connection token. Please try again.";
+        break;
+      case ErrorType.timeout:
+        message = "The operation timed out. Please try again.";
+        break;
+      case ErrorType.livekitClient:
+        message = "Connection error. Could not connect to the service.";
+        break;
+      case ErrorType.configuration:
+        message = "Configuration error. Please contact support.";
+        break;
+      case ErrorType.general:
+      default: // Handles ErrorType.general and any null errorType
+        message = defaultMessage ?? "An unexpected error occurred. Please try again.";
+        break;
     }
 
-    // Mark connection as in progress
-    if (mounted) {
-      print("[_autoConnect] Memulai proses, mengatur _isConnecting = true");
-      setState(() {
-        _isConnecting = true;
-        _showLoadingIndicator = true; // TAMBAH: Tampilkan loading indicator
-        _showAgentVisualizer = false; // TAMBAH: Sembunyikan visualizer dulu
-        _agentVisualizerOpacity = 0.0; // TAMBAH: Reset opacity
-        _connectionStatus = "Mempersiapkan koneksi..."; // Reset status koneksi
-      });
-    } else {
-      print("[_autoConnect] Widget tidak terpasang saat memulai. Membatalkan.");
-      return;
-    }
-
-    // Set timeout untuk koneksi
-    _setConnectionTimeout(roomCtx);
-
-    try {
-      // Only check permissions again if not already granted in initState
-      if (!_permissionsGranted) {
-        print(
-            "[_autoConnect] Izin belum diperiksa, memanggil _requestPermissions...");
-        setState(() {
-          _connectionStatus = "Meminta izin kamera dan mikrofon...";
-        });
-        _permissionsGranted = await _requestPermissions();
-        if (!_permissionsGranted) {
-          print("[_autoConnect] Izin tidak diberikan, koneksi dibatalkan.");
-          // Set _isConnecting to false if failed due to permissions
-          if (mounted) {
-            setState(() {
-              _isConnecting = false;
-              _showLoadingIndicator =
-                  false; // TAMBAH: Sembunyikan loading indicator
-            });
-          }
-          return;
-        }
-      } else {
-        print(
-            "[_autoConnect] Izin sudah diperiksa sebelumnya: $_permissionsGranted");
-      }
-
-      // Inisialisasi perangkat media hanya ketika yakin izin sudah diberikan
-      if (_permissionsGranted) {
-        // Check if still mounted after permissions
-        if (!mounted) {
-          print(
-              "[_autoConnect] Widget tidak terpasang setelah cek izin. Membatalkan.");
-          return;
-        }
-
-        // Use cached room and participant names
-        final roomName = _lastRoomName ??
-            'room-${(1000 + DateTime.now().millisecondsSinceEpoch % 9000)}';
-        final participantName = _lastParticipantName ??
-            'user-${(1000 + DateTime.now().millisecondsSinceEpoch % 9000)}';
-
-        // PERBAIKAN: Gunakan token yang sudah di-cache jika masih valid
-        ConnectionDetails? connectionDetails;
-        if (_cachedToken != null &&
-            _cachedServerUrl != null &&
-            _tokenExpiryTime != null &&
-            DateTime.now().isBefore(_tokenExpiryTime!)) {
-          print("[_autoConnect] Menggunakan token yang sudah di-cache");
-          connectionDetails = ConnectionDetails(
-            serverUrl: _cachedServerUrl!,
-            roomName: roomName,
-            participantName: participantName,
-            participantToken: _cachedToken!,
-          );
-
-          // Update status
-          if (mounted) {
-            setState(() {
-              _connectionStatus = "Menghubungkan ke server...";
-            });
-          }
-        } else {
-          // Get connection details - menggunakan caching yang telah diimplementasi di TokenService
-          print("[_autoConnect] Mengambil detail koneksi dari TokenService...");
-          if (mounted) {
-            setState(() {
-              _connectionStatus = "Meminta token koneksi...";
-            });
-          }
-
-          connectionDetails = await tkService.fetchConnectionDetails(
-            roomName: roomName,
-            participantName: participantName,
-          );
-
-          // Cache token untuk penggunaan berikutnya
-          if (connectionDetails != null) {
-            _cachedToken = connectionDetails.participantToken;
-            _cachedServerUrl = connectionDetails.serverUrl;
-            // Set waktu kedaluwarsa token (misalnya 1 jam)
-            _tokenExpiryTime = DateTime.now().add(const Duration(hours: 1));
-          }
-        }
-
-        if (connectionDetails == null) {
-          print("[_autoConnect] Gagal mendapatkan detail koneksi.");
-          throw Exception('Gagal mendapatkan detail koneksi');
-        }
-
-        print(
-            "[_autoConnect] Detail koneksi didapatkan: Server=${connectionDetails.serverUrl}");
-
-        // PERBAIKAN: Jika reconnect, pastikan room dalam keadaan bersih
-        if (room.connectionState != ConnectionState.disconnected) {
-          print(
-              "[_autoConnect] Room dalam state ${room.connectionState}, mencoba disconnect terlebih dahulu");
-          // Disconnect untuk memastikan semua track dibersihkan
-          await roomCtx.disconnect();
-          // Tunggu sebentar untuk memastikan pembersihan selesai
-          await Future.delayed(
-              const Duration(milliseconds: 200)); // Kurangi delay dari 300ms
-        }
-
-        // Inisialisasi perangkat media terlebih dahulu secara paralel untuk mempercepat koneksi
-        print("[_autoConnect] Melakukan pre-inisialisasi perangkat media...");
-        if (mounted) {
-          setState(() {
-            _connectionStatus = "Menyiapkan kamera dan mikrofon...";
-          });
-        }
-
-        MediaStream? preInitTrack;
-        try {
-          // PERBAIKAN: Gunakan opsi media yang lebih ringan
-          preInitTrack = await navigator.mediaDevices.getUserMedia({
-            'audio': true,
-            'video': {
-              'width': {'ideal': 640},
-              'height': {'ideal': 480},
-              'frameRate': {'ideal': 20},
-            },
-          });
-        } catch (e) {
-          print("[_autoConnect] Error saat pre-inisialisasi media: $e");
-          // Lanjutkan meskipun ada error pada pre-inisialisasi
-        }
-
-        // Check if still mounted before connect
-        if (!mounted) {
-          print(
-              "[_autoConnect] Widget tidak terpasang sebelum connect. Membatalkan.");
-          // Pastikan untuk melepaskan track pre-inisialisasi
-          preInitTrack?.getTracks().forEach((track) => track.stop());
-          return;
-        }
-
-        // Connect to the LiveKit room
-        print(
-            '[autoConnect] Mencoba menghubungkan ke ${connectionDetails.serverUrl}...');
-        if (mounted) {
-          setState(() {
-            _connectionStatus = "Menghubungkan ke room...";
-          });
-        }
-
-        await roomCtx.connect(
-          url: connectionDetails.serverUrl,
-          token: connectionDetails.participantToken,
-        );
-
-        // Lepaskan track pre-inisialisasi karena tidak lagi diperlukan
-        preInitTrack?.getTracks().forEach((track) => track.stop());
-
-        print(
-            '[autoConnect] Koneksi otomatis BERHASIL. Partisipan lokal: ${roomCtx.room.localParticipant?.identity}');
-
-        // Check if still mounted before enabling media
-        if (!mounted) {
-          print(
-              "[_autoConnect] Widget tidak terpasang setelah connect. Membatalkan.");
-          return;
-        }
-
-        // PERBAIKAN: Tambahkan delay lebih pendek sebelum mengaktifkan media
-        await Future.delayed(
-            const Duration(milliseconds: 100)); // Kurangi dari 200ms
-
-        // PERBAIKAN: Aktifkan kamera dan mikrofon secara paralel
-        if (mounted) {
-          setState(() {
-            _connectionStatus = "Mengaktifkan kamera dan mikrofon...";
-          });
-        }
-
-        try {
-          // Aktifkan kamera dan mikrofon secara paralel untuk kecepatan
-          final futures = <Future>[];
-          if (roomCtx.localParticipant != null) {
-            futures.add(roomCtx.localParticipant!.setMicrophoneEnabled(true));
-            futures.add(roomCtx.localParticipant!.setCameraEnabled(true));
-          }
-          await Future.wait(futures);
-          print(
-              '[autoConnect] Kamera dan mikrofon berhasil diaktifkan secara paralel');
-        } catch (e) {
-          print(
-              '[autoConnect] Error saat mengaktifkan perangkat secara paralel: $e');
-          // Jika gagal, coba aktifkan satu per satu
-          if (mounted) {
-            try {
-              await roomCtx.localParticipant?.setMicrophoneEnabled(true);
-              print('[autoConnect] Mikrofon berhasil diaktifkan');
-
-              await roomCtx.localParticipant?.setCameraEnabled(true);
-              print('[autoConnect] Kamera berhasil diaktifkan');
-            } catch (retryError) {
-              print(
-                  '[autoConnect] Error saat retry perangkat media: $retryError');
-            }
-          }
-        }
-
-        if (!mounted) return;
-        print(
-            '[autoConnect] Status perangkat - Mikrofon: ${roomCtx.localParticipant?.isMicrophoneEnabled()}, Kamera: ${roomCtx.localParticipant?.isCameraEnabled()}');
-
-        // Lebih singkat delay stabilisasi
-        await Future.delayed(
-            const Duration(milliseconds: 50)); // Kurangi dari 100ms
-        if (!mounted) return;
-
-        // Koneksi berhasil, tampilkan visualizer dengan fade in lebih cepat
-        if (mounted) {
-          setState(() {
-            _showAgentVisualizer = true;
-            _connectionStatus = "Koneksi berhasil!";
-          });
-
-          // Mulai animasi fade in untuk visualizer lebih cepat
-          Future.delayed(const Duration(milliseconds: 50), () {
-            // Kurangi dari 100ms
-            if (mounted) {
-              setState(() {
-                _agentVisualizerOpacity = 1.0;
-              });
-              // Sembunyikan loading indicator setelah visualizer mulai muncul
-              Future.delayed(const Duration(milliseconds: 100), () {
-                // Kurangi dari 200ms
-                if (mounted) {
-                  setState(() {
-                    _showLoadingIndicator = false;
-                  });
-                }
-              });
-            }
-          });
-        }
-
-        print('[autoConnect] Proses koneksi otomatis SELESAI.');
-
-        // TAMBAH: Cancel timeout timer karena koneksi berhasil
-        if (_connectionTimeoutTimer != null &&
-            _connectionTimeoutTimer!.isActive) {
-          _connectionTimeoutTimer!.cancel();
-        }
-      }
-    } catch (error) {
-      print('[autoConnect] KESALAHAN koneksi otomatis: $error');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kesalahan Koneksi: ${error.toString()}')),
-        );
-
-        // PERBAIKAN: Coba melakukan disconnect jika terjadi error untuk membersihkan status
-        try {
-          await roomCtx.disconnect();
-        } catch (disconnectError) {
-          print(
-              '[autoConnect] Error saat disconnect setelah error: $disconnectError');
-        }
-
-        // TAMBAH: Reset state animasi jika error
-        setState(() {
-          _showAgentVisualizer = false;
-          _showLoadingIndicator = false;
-          _agentVisualizerOpacity = 0.0;
-        });
-      }
-    } finally {
-      print("[_autoConnect] Blok finally dieksekusi.");
-      if (mounted) {
-        print("[_autoConnect] Mengatur _isConnecting = false di finally.");
-        setState(() {
-          _isConnecting = false;
-          // Catatan: Tidak mengubah _showLoadingIndicator di sini karena kita mengelola
-          // loading indicator dan visualizer secara terpisah dengan animasi fade
-        });
-      }
-
-      // TAMBAH: Cancel timeout timer
-      if (_connectionTimeoutTimer != null &&
-          _connectionTimeoutTimer!.isActive) {
-        _connectionTimeoutTimer!.cancel();
-      }
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
-  // Metode untuk set timeout koneksi
-  void _setConnectionTimeout(RoomContext roomCtx) {
-    // Batalkan timer sebelumnya jika ada
-    _connectionTimeoutTimer?.cancel();
 
-    // Buat timer baru 12 detik
-    _connectionTimeoutTimer = Timer(const Duration(seconds: 12), () {
-      if (_isConnecting && mounted) {
-        print("[_autoConnect] Timeout - koneksi terlalu lama");
-        setState(() {
-          _isConnecting = false;
-          _showLoadingIndicator = false;
-          _connectionStatus = "Koneksi timeout. Coba lagi.";
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Koneksi terlalu lama. Silakan coba lagi.')),
-        );
-
-        // Coba disconnect jika masih dalam proses koneksi
-        try {
-          roomCtx.disconnect();
-        } catch (e) {
-          print("[_autoConnect] Error saat disconnect setelah timeout: $e");
-        }
-      }
-    });
-  }
+  // _autoConnect // REMOVED (use _connectionService.connect())
+  // _setConnectionTimeout // REMOVED (handled by ConnectionService)
 
   @override
   Widget build(BuildContext context) {
@@ -1045,137 +599,65 @@ class _VoiceAssistantState extends State<VoiceAssistant>
         // ChangeNotifierProvider(create: (context) => MediaDeviceContext()),
       ],
       child: Builder(builder: (context) {
-        // --- Logika Panggil Auto Connect --- -> Pindahkan ke dalam Builder
-        // Panggil hanya SEKALI setelah build pertama selesai DAN belum dipanggil sebelumnya
-        // DAN belum sedang connecting DAN belum terhubung
-        if (_isReadyToConnect &&
-            !_isConnecting &&
-            room.connectionState == ConnectionState.disconnected) {
-          print(
-              "[build] Kondisi terpenuhi, menjadwalkan pemanggilan _autoConnect()...");
-          // Tandai bahwa pemanggilan akan dilakukan untuk mencegah pemanggilan ganda
-          // Set ini SEGERA untuk menghindari race condition jika build terpanggil lagi cepat
-          // Meskipun _isConnecting juga akan mencegahnya nanti
-          // Ambil provider di sini menggunakan context dari Builder
-          final roomCtxForCall = context.read<RoomContext>();
-          final tkServiceForCall = context.read<TokenService>();
-          print(
-              "[build] Menjadwalkan _autoConnect dengan instance provider...");
-          // Gunakan Future.microtask dan lewati instance provider
-          Future.microtask(
-              () => _autoConnect(roomCtxForCall, tkServiceForCall));
-        }
-        // ------------------------------------
+        // --- Logika Panggil Auto Connect --- -> MOVED to initState's addPostFrameCallback using _connectionService.connect()
+        
+        // Listener untuk perubahan connection state (room.addListener)
+        // This might be partially handled by ConnectionService's own listeners.
+        // If UI needs to react to room.connectionState directly for things not covered by statusStream, keep specific parts.
+        // For now, assuming statusStream is comprehensive for UI state.
+        // room.addListener(() {
+        //   if (mounted) setState(() {}); // Generic update if needed
+        // });
 
-        // Tambahkan listener untuk perubahan connection state
-        room.addListener(() {
-          if (room.connectionState != ConnectionState.connected &&
-              _wasConnectedBefore) {
-            print(
-                "[RoomListener] Terdeteksi koneksi terputus dari state connected");
-            // Jika room terputus tapi sebelumnya terhubung dan internet tersedia, coba reconnect
-            if (_isInternetAvailable) {
-              print("[RoomListener] Internet tersedia, mencoba reconnect");
-              _attemptManualReconnect();
-            } else {
-              print(
-                  "[RoomListener] Internet tidak tersedia, menunggu koneksi internet");
-            }
-          } else if (room.connectionState == ConnectionState.connected) {
-            _wasConnectedBefore = true;
-            _resetReconnectState(); // Reset reconnect state jika berhasil terhubung
-          }
-        });
+        // REMOVE: final roomContext = context.watch<RoomContext>();
+        // We will use Consumer/Selector where needed.
 
-        // Pindahkan logika akses RoomContext ke sini
-        final roomContext = context.watch<RoomContext>();
-        final participant = roomContext.room.localParticipant;
-        final connectionState =
-            roomContext.room.connectionState; // Dapatkan state koneksi
+        // print('[build] Is Connecting State: $_isConnecting'); // Use _connectionService.isConnecting
+        print('[build] Is Connecting State (from service): ${_connectionService.isConnecting}');
+        print('[build] UI Connection Status: $_uiConnectionStatus');
 
-        // Mendapatkan kualitas koneksi dari participant
-        final connectionQuality =
-            participant?.connectionQuality ?? ConnectionQuality.unknown;
-
-        // --- AWAL PERUBAHAN (Revisi untuk Linter Errors) ---
-        // Prioritaskan screen share track jika ada dan sedang aktif
-        LocalVideoTrack? displayTrack;
-        LocalTrackPublication<LocalVideoTrack>? screenSharePub;
-        LocalTrackPublication<LocalVideoTrack>? cameraPub;
-
-        if (participant != null) {
-          // Coba cari publikasi screen share video yang aktif (tidak di-mute dan track ada)
-          try {
-            screenSharePub = participant.videoTrackPublications.firstWhere(
-              (pub) =>
-                  pub.source == TrackSource.screenShareVideo &&
-                  pub.track != null &&
-                  !pub.muted,
-            );
-            displayTrack = screenSharePub.track as LocalVideoTrack?;
-            print(
-                '[build] Menggunakan track screen share: ${displayTrack?.sid}');
-          } catch (e) {
-            // Tidak ada screen share track yang aktif, coba kamera
-            print(
-                '[build] Tidak ada track screen share aktif, mencari track kamera.');
-            screenSharePub = null;
-          }
-
-          // Jika tidak ada screen share track, gunakan track kamera
-          if (displayTrack == null) {
-            try {
-              cameraPub = participant.videoTrackPublications.firstWhere(
-                (pub) =>
-                    pub.source == TrackSource.camera &&
-                    pub.track != null &&
-                    !pub.muted, // Tambahkan cek !pub.muted
-              );
-              displayTrack = cameraPub.track as LocalVideoTrack?;
-              print('[build] Menggunakan track kamera: ${displayTrack?.sid}');
-            } catch (e) {
-              cameraPub = null;
-              displayTrack = null;
-              print('[build] Tidak ada track kamera aktif.');
-            }
-          }
-        }
-        // --- AKHIR PERUBAHAN ---
-
-        // Tambahkan logging build
-        print('[build] State Koneksi: $connectionState');
-        print('[build] Participant: ${participant?.identity}');
-        print(
-            '[build] Connection Quality: $connectionQuality'); // Log kualitas koneksi
-        print(
-            '[build] Video Publications: ${participant?.videoTrackPublications.length}');
-        print(
-            '[build] Camera Pub: ${cameraPub?.sid}, ScreenShare Pub: ${screenSharePub?.sid}');
-        print(
-            '[build] Display Video Track: ${displayTrack?.sid} (Label: ${displayTrack?.mediaStreamTrack.label})');
-        print('[build] Is Display Track Null: ${displayTrack == null}');
-        print('[build] Is Connecting State: $_isConnecting');
 
         return Scaffold(
-          // Ensure the body extends behind the floating header and bottom bar
           extendBody: true,
-          // extendBodyBehindAppBar: true, // Not needed as we removed AppBar
-
-          // Keep background transparent or set as needed for the base layer
-          backgroundColor: Colors
-              .black, // Example: Set base background if video doesn't load
-
+          backgroundColor: Colors.black,
           body: Stack(
-            // Use Stack for layering
             children: [
               // Layer 1: Video Background (Fill the screen)
-              if (displayTrack != null)
-                Positioned.fill(
-                  child: VideoTrackRenderer(
-                    displayTrack!,
-                    fit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                  ),
-                ),
+              Consumer<RoomContext>(
+                builder: (context, roomCtx, _) {
+                  final participant = roomCtx.room.localParticipant;
+                  LocalVideoTrack? displayTrack;
+                  if (participant != null) {
+                    try {
+                      final screenSharePub = participant.videoTrackPublications.firstWhere(
+                        (pub) => pub.source == TrackSource.screenShareVideo && pub.track != null && !pub.muted,
+                      );
+                      displayTrack = screenSharePub.track as LocalVideoTrack?;
+                    } catch (e) {
+                      // No active screen share, try camera
+                    }
+                    if (displayTrack == null) {
+                      try {
+                        final cameraPub = participant.videoTrackPublications.firstWhere(
+                          (pub) => pub.source == TrackSource.camera && pub.track != null && !pub.muted,
+                        );
+                        displayTrack = cameraPub.track as LocalVideoTrack?;
+                      } catch (e) {
+                        // No active camera track
+                      }
+                    }
+                  }
+                  if (displayTrack != null) {
+                    return Positioned.fill(
+                      child: VideoTrackRenderer(
+                        displayTrack,
+                        fit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink(); // Return empty if no track
+                },
+              ),
 
               // Layer 1.5: Agent Status dengan AnimatedOpacity (Centered)
               AnimatedOpacity(
@@ -1208,7 +690,7 @@ class _VoiceAssistantState extends State<VoiceAssistant>
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          _connectionStatus,
+                          _uiConnectionStatus, // Use status from ConnectionService
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -1292,43 +774,28 @@ class _VoiceAssistantState extends State<VoiceAssistant>
                           // Wrap CircleAvatar with GestureDetector (remove const)
                           GestureDetector(
                             onTap: () {
-                              // Dapatkan pengguna yang sedang login
-                              final User? currentUser =
-                                  FirebaseAuth.instance.currentUser;
-
                               // Navigate to AccountScreen
                               print(
                                   "[Header] Avatar pressed - Navigating to Account Screen");
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => AccountScreen(
-                                    displayName: currentUser?.displayName,
-                                    email: currentUser?.email,
-                                    photoURL: currentUser?.photoURL,
-                                  ), // Pastikan AccountScreen dapat menerima argumen null jika perlu
+                                  builder: (_) => AccountScreen( // Use _currentUser from state
+                                    displayName: _currentUser?.displayName,
+                                    email: _currentUser?.email,
+                                    photoURL: _currentUser?.photoURL,
+                                  ),
                                 ),
                               );
                             },
                             child: CircleAvatar(
-                              // Pertimbangkan untuk menampilkan foto profil pengguna di sini juga
-                              radius: 16, // Adjust size as needed
-                              backgroundImage:
-                                  FirebaseAuth.instance.currentUser?.photoURL !=
-                                              null &&
-                                          FirebaseAuth.instance.currentUser!
-                                              .photoURL!.isNotEmpty
-                                      ? NetworkImage(FirebaseAuth
-                                          .instance.currentUser!.photoURL!)
-                                      : null,
-                              child:
-                                  FirebaseAuth.instance.currentUser?.photoURL ==
-                                              null ||
-                                          FirebaseAuth.instance.currentUser!
-                                              .photoURL!.isEmpty
-                                      ? const Icon(Icons.person,
-                                          size: 18) // Placeholder icon
-                                      : null,
+                              radius: 16,
+                              backgroundImage: _currentUser?.photoURL != null && _currentUser!.photoURL!.isNotEmpty
+                                  ? NetworkImage(_currentUser!.photoURL!)
+                                  : null,
+                              child: _currentUser?.photoURL == null || _currentUser!.photoURL!.isEmpty
+                                  ? const Icon(Icons.person, size: 18)
+                                  : null,
                             ),
                           ),
                         ],
@@ -1386,8 +853,9 @@ class _VoiceAssistantState extends State<VoiceAssistant>
                     final isMicEnabled =
                         roomCtx.localParticipant?.isMicrophoneEnabled() ??
                             false;
-                    final bool isButtonEnabled = isConnected &&
-                        !_isConnecting; // Check connection and not auto-connecting
+                    // Use ConnectionService's state for enabling button
+                    final bool isButtonEnabled = roomCtx.room.connectionState == ConnectionState.connected &&
+                                                 !_connectionService.isConnecting; 
 
                     // Return the Center containing the ElevatedButton
                     return Center(
@@ -1490,106 +958,89 @@ class _VoiceAssistantState extends State<VoiceAssistant>
                           color: Colors.white), // Ganti ikon ke screen share
                     ),
                     const SizedBox(height: 16),
-                    FloatingActionButton(
-                      heroTag: 'camera_fab',
-                      mini: true,
-                      onPressed: (displayTrack != null &&
-                              screenSharePub == null &&
-                              !_isConnecting) // Hanya aktif jika kamera yang tampil dan bukan screen share
-                          ? () async {
-                              print(
-                                  "[FAB Camera] Tombol ganti kamera ditekan.");
-                              final roomCtx = context.read<RoomContext>();
-                              final participant = roomCtx.room.localParticipant;
-                              print(
-                                  "[FAB Camera] Participant: ${participant?.sid}");
-                              print(
-                                  "[FAB Camera] Video Publications Count: ${participant?.videoTrackPublications.length}");
+                    Consumer<RoomContext>( // Wrap FAB with Consumer for displayTrack and screenSharePub
+                      builder: (context, roomCtx, _) {
+                        final participant = roomCtx.room.localParticipant;
+                        LocalVideoTrack? displayTrack;
+                        LocalTrackPublication<LocalVideoTrack>? screenSharePub;
 
-                              LocalVideoTrack? cameraTrackToRestart;
-                              LocalTrackPublication<LocalVideoTrack>?
-                                  currentCameraPub;
+                        if (participant != null) {
+                          try {
+                            screenSharePub = participant.videoTrackPublications.firstWhere(
+                              (pub) => pub.source == TrackSource.screenShareVideo && pub.track != null && !pub.muted,
+                            );
+                            displayTrack = screenSharePub.track as LocalVideoTrack?;
+                          } catch (e) { /* No screen share */ }
+                          if (displayTrack == null) {
+                            try {
+                              final cameraPub = participant.videoTrackPublications.firstWhere(
+                                (pub) => pub.source == TrackSource.camera && pub.track != null && !pub.muted,
+                              );
+                              displayTrack = cameraPub.track as LocalVideoTrack?;
+                            } catch (e) { /* No camera */ }
+                          }
+                        }
 
-                              if (participant != null) {
-                                try {
-                                  currentCameraPub = participant
-                                      .videoTrackPublications
-                                      .firstWhere(
-                                    (pub) =>
-                                        pub.source == TrackSource.camera &&
-                                        pub.track is LocalVideoTrack &&
-                                        pub.track?.mediaStreamTrack.enabled ==
-                                            true && // Pastikan track-nya enabled
-                                        !pub.muted, // Dan publikasinya tidak di-mute
-                                  );
-                                  cameraTrackToRestart = currentCameraPub.track
-                                      as LocalVideoTrack?;
-                                } catch (e) {
-                                  print(
-                                      "[FAB Camera] Tidak menemukan track kamera aktif untuk di-restart: $e");
-                                  cameraTrackToRestart = null;
-                                }
-                              }
+                        return FloatingActionButton(
+                          heroTag: 'camera_fab',
+                          mini: true,
+                          onPressed: (displayTrack != null &&
+                                  screenSharePub == null &&
+                                  !_connectionService.isConnecting)
+                              ? () async {
+                                  print("[FAB Camera] Tombol ganti kamera ditekan.");
+                                  // Use context.read<RoomContext>() for actions if needed, or pass participant
+                                  final currentParticipant = context.read<RoomContext>().room.localParticipant;
+                                  if (currentParticipant == null) return;
 
-                              print(
-                                  "[FAB Camera] Camera Track to Restart Found: ${cameraTrackToRestart?.sid}");
-
-                              if (cameraTrackToRestart != null) {
-                                try {
-                                  final newPosition = (_currentCameraPosition ==
-                                          CameraPosition.front)
-                                      ? CameraPosition.back
-                                      : CameraPosition.front;
-                                  print(
-                                      '[FAB Camera] Mencoba mengganti kamera ke: $newPosition');
-                                  final newOptions = CameraCaptureOptions(
-                                      cameraPosition: newPosition);
-                                  await cameraTrackToRestart.restartTrack(
-                                      newOptions); // Gunakan cameraTrackToRestart
-                                  print('[FAB Camera] restartTrack selesai.');
-                                  if (mounted) {
-                                    setState(() {
-                                      _currentCameraPosition = newPosition;
-                                      print(
-                                          '[FAB Camera] State kamera diperbarui ke: $newPosition');
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Mengganti kamera ke ${newPosition.name}')),
+                                  LocalVideoTrack? cameraTrackToRestart;
+                                  try {
+                                    final currentCameraPub = currentParticipant.videoTrackPublications.firstWhere(
+                                      (pub) => pub.source == TrackSource.camera && pub.track is LocalVideoTrack && pub.track?.mediaStreamTrack.enabled == true && !pub.muted,
                                     );
+                                    cameraTrackToRestart = currentCameraPub.track as LocalVideoTrack?;
+                                  } catch (e) {
+                                    print("[FAB Camera] Tidak menemukan track kamera aktif untuk di-restart: $e");
                                   }
-                                } catch (e) {
-                                  print(
-                                      "[FAB Camera] Error saat restartTrack untuk ganti kamera: $e");
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text(
-                                              'Tidak dapat mengganti kamera.')),
-                                    );
+
+                                  if (cameraTrackToRestart != null) {
+                                    try {
+                                      final newPosition = (_currentCameraPosition == CameraPosition.front)
+                                          ? CameraPosition.back
+                                          : CameraPosition.front;
+                                      final newOptions = CameraCaptureOptions(cameraPosition: newPosition);
+                                      await cameraTrackToRestart.restartTrack(newOptions);
+                                      if (mounted) {
+                                        setState(() { _currentCameraPosition = newPosition; });
+                                      final newOptions = CameraCaptureOptions(cameraPosition: newPosition);
+                                      await cameraTrackToRestart.restartTrack(newOptions);
+                                      if (mounted) {
+                                        setState(() { _currentCameraPosition = newPosition; });
+                                        ScaffoldMessenger.of(context).showSnackBar( // Keep specific SnackBar for success
+                                          SnackBar(content: Text('Mengganti kamera ke ${newPosition.name}')),
+                                        );
+                                      }
+                                    } catch (e, st) {
+                                      print("[FAB Camera] Error restarting track: $e\nStack: $st");
+                                      if (mounted) {
+                                        _showErrorSnackBar(ErrorType.general, 'Could not switch camera.');
+                                      }
+                                    }
+                                  } else {
+                                     if (mounted) {
+                                        _showErrorSnackBar(ErrorType.general, 'Camera track not found or not ready.');
+                                      }
                                   }
                                 }
-                              } else {
-                                print(
-                                    "[FAB Camera] Track kamera aktif tidak ditemukan atau tidak dapat di-restart saat tombol ditekan.");
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Track kamera tidak ditemukan atau belum siap untuk diganti.')),
-                                  );
-                                }
-                              }
-                            }
-                          : null,
-                      backgroundColor: (displayTrack != null &&
-                              screenSharePub == null &&
-                              !_isConnecting)
-                          ? const Color(0xFF324EFF)
-                          : Colors.grey,
-                      child: const Icon(Icons.camera_alt_outlined,
-                          color: Colors.white),
+                              : null,
+                          backgroundColor: (displayTrack != null &&
+                                  screenSharePub == null &&
+                                  !_connectionService.isConnecting)
+                              ? const Color(0xFF324EFF)
+                              : Colors.grey,
+                          child: const Icon(Icons.camera_alt_outlined,
+                        );
+                      }
                     ),
                   ],
                 ),
@@ -1742,6 +1193,304 @@ class _VoiceAssistantState extends State<VoiceAssistant>
       }
     } catch (e) {
       print("[_checkAndRestoreScreenSharing] Error: $e");
+    }
+  }
+}
+
+class _CustomHeader extends StatelessWidget {
+  final User? currentUser;
+
+  const _CustomHeader({this.currentUser});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF3A59D1),
+      height: 56.0 + MediaQuery.of(context).padding.top,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top,
+        left: 16.0,
+        right: 16.0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text(
+            'View',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.help_outline, color: Colors.white, size: 24),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ContactUsScreen()),
+                  );
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AccountScreen(
+                        displayName: currentUser?.displayName,
+                        email: currentUser?.email,
+                        photoURL: currentUser?.photoURL,
+                      ),
+                    ),
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundImage: currentUser?.photoURL != null && currentUser!.photoURL!.isNotEmpty
+                      ? NetworkImage(currentUser!.photoURL!)
+                      : null,
+                  child: currentUser?.photoURL == null || currentUser!.photoURL!.isEmpty
+                      ? const Icon(Icons.person, size: 18)
+                      : null,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomNavBar extends StatelessWidget {
+  const _BottomNavBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomAppBar(
+      color: const Color(0xFF3A59D1),
+      elevation: 8.0,
+      height: 70.0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          _buildNavItem(Icons.visibility_outlined, 'View', true, context), // Pass context
+          GestureDetector(
+            onTap: () {
+              print("[BottomNav] Tombol History ditekan.");
+              final roomCtx = context.read<RoomContext>();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider<RoomContext>.value(
+                    value: roomCtx,
+                    child: const TranscriptionScreen(),
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              color: Colors.transparent,
+              child: _buildNavItem(Icons.history_outlined, 'History', false, context), // Pass context
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, bool isActive, BuildContext context) { // Accept context
+    final color = isActive ? Colors.white : const Color(0xFFB5C0ED);
+    return SizedBox(
+      width: 80,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+                          color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+
+              // TAMBAHKAN: Indikator Kualitas Koneksi di pojok kiri bawah
+              Positioned(
+                bottom: 80, // Posisikan di atas BottomAppBar
+                left: 16, // Posisikan di sisi kiri dengan jarak 16
+                child: Consumer<RoomContext>(
+                  builder: (context, roomCtx, child) {
+                    // Dapatkan kualitas koneksi dari participant
+                    final connectionQuality =
+                        roomCtx.localParticipant?.connectionQuality ??
+                            ConnectionQuality.unknown;
+
+                    // Tampilkan indikator koneksi
+                    return ConnectionQualityIndicator(
+                      connectionQuality: connectionQuality,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          // Keep BottomAppBar
+          bottomNavigationBar: BottomAppBar(
+            color: const Color(0xFF3A59D1), // Changed color to Figma blue
+            elevation: 8.0,
+            // Removed shape and notchMargin
+            height: 70.0,
+            child: Row(
+              // Change mainAxisAlignment to spaceEvenly for better distribution
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                // Keep 'View' item (using visibility icon, marked as active)
+                _buildNavItem(Icons.visibility_outlined, 'View', true),
+                // Add 'History' item (using history icon, marked as inactive)
+                // Wrap with GestureDetector for tap functionality
+                GestureDetector(
+                  onTap: () {
+                    print("[BottomNav] Tombol History ditekan.");
+                    // Get RoomContext before navigating, similar to FAB
+                    final roomCtx = context.read<RoomContext>();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        // Provide the existing RoomContext to the new route
+                        builder: (_) =>
+                            ChangeNotifierProvider<RoomContext>.value(
+                          value: roomCtx,
+                          child: const TranscriptionScreen(),
+                        ),
+                      ),
+                    );
+                  },
+                  // Make the container transparent for hit testing
+                  child: Container(
+                    color: Colors
+                        .transparent, // Ensures the tap area covers the SizedBox
+                    child:
+                        _buildNavItem(Icons.history_outlined, 'History', false),
+                  ),
+                ),
+                // Removed other items
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  // Helper widget to build navigation items
+  Widget _buildNavItem(IconData icon, String label, bool isActive) {
+    // Updated colors based on Figma active/inactive states
+    final color = isActive ? Colors.white : const Color(0xFFB5C0ED);
+    // Wrap with Padding for better spacing control if needed, but SizedBox width might be enough
+    return SizedBox(
+      // Use SizedBox for consistent width
+      // Consider adjusting width if needed based on screen size or design specifics
+      width: 80, // Slightly reduced width to give more space
+      child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center, // Center content vertically
+        // Ensure minimum size to prevent text overflow issues
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Reduce icon size
+          Icon(icon, color: color, size: 24),
+          // Reduce space between icon and text
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12, // Keep font size
+              fontWeight: FontWeight
+                  .w500, // Changed font weight to 500 (medium) for all states
+            ),
+            overflow: TextOverflow.ellipsis, // Prevent overflow
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Override didChangeAppLifecycleState untuk merespons saat app kembali dari background
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    print("[didChangeAppLifecycleState] State berubah: $state");
+
+    // Periksa apakah screen sharing aktif ketika aplikasi kembali ke foreground
+    if (state == AppLifecycleState.resumed) {
+      _checkAndRestoreScreenSharing();
+    }
+  }
+
+  // Memeriksa dan mengembalikan floating button jika screen sharing aktif
+  void _checkAndRestoreScreenSharing() {
+    print("[_checkAndRestoreScreenSharing] Memeriksa status screen sharing...");
+
+    // Dapatkan RoomContext
+    try {
+      final roomCtx = Provider.of<RoomContext>(context, listen: false);
+
+      // Cek apakah room terhubung dan participant tersedia
+      if (roomCtx.room.connectionState == ConnectionState.connected &&
+          roomCtx.room.localParticipant != null) {
+        // Cek apakah screen share aktif
+        final isScreenShareActive =
+            roomCtx.room.localParticipant!.isScreenShareEnabled();
+        print(
+            "[_checkAndRestoreScreenSharing] Status screen sharing: $isScreenShareActive");
+
+        if (isScreenShareActive) {
+          // Tampilkan kembali floating button jika screen sharing masih aktif
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              print(
+                  "[_checkAndRestoreScreenSharing] Menampilkan kembali floating button");
+              // Gunakan helper untuk menampilkan floating button
+            ScreenShareHelper.showFloatingButton(context, roomCtx.room.localParticipant!);
+            }
+          });
+        }
+      }
+    } on ProviderNotFoundException catch (e, st) {
+        print("[_checkAndRestoreScreenSharing] ProviderNotFoundException: $e\nStack: $st");
+        // This might happen if the widget is not in the tree, or RoomContext is not available.
+        // Usually, this shouldn't show a user-facing error unless it's unexpected.
+    }
+    catch (e, st) {
+      print("[_checkAndRestoreScreenSharing] Error: $e\nStack: $st");
+      // Potentially show a generic error if this check is critical and fails unexpectedly.
+      // _showErrorSnackBar(ErrorType.general, "Could not check screen sharing status.");
     }
   }
 }

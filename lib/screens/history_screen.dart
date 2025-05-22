@@ -1,10 +1,10 @@
-import 'package:flutter/cupertino.dart'; // Impor Cupertino untuk segmented control
+import 'package:flutter/cupertino.dart'; // Import Cupertino for segmented control
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart'; // Untuk SystemUiOverlayStyle
-// import 'package:netrai/widgets/bottom_navbar.dart'; // <-- Impor BottomNavBar -> Sementara dikomentari
+import 'package:flutter/services.dart'; // For SystemUiOverlayStyle
+// import 'package:netrai/widgets/bottom_navbar.dart'; // <-- BottomNavBar import commented out for now
 
-// StatefulWidget untuk tampilan History
+// StatefulWidget for History screen
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -15,88 +15,87 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   // int _selectedSegment = 0; // 0: All, 1: Images, 2: Videos
 
-  // --- Placeholder Data untuk Percakapan ---
+  // --- Placeholder Data for Conversation ---
   final List<Map<String, dynamic>> _conversationItems = [
     {
       'sender': 'user',
-      'text': 'Tolong beri tahu, apa yang ada di depanku sekarang?',
+      'text': 'Please tell me, what is in front of me right now?', // Translated
     },
     {
       'sender': 'ai',
       'text':
-          'Di depanmu ada sebuah rak berisi banyak makanan kemasan yang tersusun dengan sangat rapi. Apakah ada yang ingin kamu ketahui lagi?',
+          'In front of you is a shelf filled with many neatly arranged packaged foods. Is there anything else you would like to know?', // Translated
     },
     {
       'sender': 'user',
-      'text': 'Apakah terdapat makanan ringan berbahan kentang di rak ini?',
+      'text': 'Are there any potato-based snacks on this shelf?', // Translated
     },
     {
       'sender': 'ai',
       'text':
-          'Tidak ada makanan ringan berbahan kentang di rak ini. Mungkin kamu bisa mengarahkan kamera ke sebelah kanan. Aku akan coba memindainya.',
+          'There are no potato-based snacks on this shelf. Perhaps you could point the camera to the right. I will try to scan it.', // Translated
     },
-    // Tambahkan contoh percakapan lain jika perlu
+    // Add other conversation examples if needed
     {
       'sender': 'user',
-      'text': 'Berapa jumlah uang yang saat ini ada di depanku?',
+      'text': 'How much money is currently in front of me?', // Translated
     },
     {
       'sender': 'ai',
       'text':
-          'Saat ini ada selembar uang lima puluh ribu dan dua lembar uang dua ribu. Sehingga ada lima puluh empat ribu rupiah di depanmu.',
+          'Currently, there is one fifty thousand rupiah note and two two thousand rupiah notes. So, there are fifty-four thousand rupiahs in front of you.', // Translated
     },
   ];
-  // --- Akhir Placeholder Data ---
+  // --- End of Placeholder Data ---
 
-  // Filter history items berdasarkan segmen yang dipilih
+  // Filter history items based on selected segment
   // List<Map<String, dynamic>> get _filteredHistoryItems {
   //   if (_selectedSegment == 1) {
   //     return _historyItems.where((item) => item['type'] == 'image').toList();
   //   } else if (_selectedSegment == 2) {
   //     return _historyItems.where((item) => item['type'] == 'video').toList();
   //   } else {
-  //     return _historyItems; // Tampilkan semua
+  //     return _historyItems; // Show all
   //   }
   // }
 
   @override
   Widget build(BuildContext context) {
-    // Warna dari Figma
+    // Colors from Figma
     const Color primaryBlue = Color(0xFF3A58D0);
     const Color primaryWhite = Colors.white;
-    // const Color bodyBackground = Color(0xFFF5F5F5); -> Diubah ke Putih
-    const Color bodyBackground = Colors.white; // Sesuai Figma Frame bg
-    const Color textColorBlack = Colors.black; // Warna teks utama
-    const Color bubbleColor = Color(0xFFB5C0ED); // Warna bubble AI
+    // const Color bodyBackground = Color(0xFFF5F5F5); // Changed to White
+    const Color bodyBackground = Colors.white; // Consistent with Figma Frame bg
+    const Color textColorBlack = Colors.black; // Main text color
+    const Color bubbleColor = Color(0xFFB5C0ED); // AI bubble color
 
-    // Atur status bar
+    // Set status bar style
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: primaryBlue,
         statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark, // Untuk iOS
+        statusBarBrightness: Brightness.dark, // For iOS
       ),
     );
 
     return Scaffold(
-      backgroundColor: bodyBackground, // Latar belakang putih
+      backgroundColor: bodyBackground, // White background
       appBar: AppBar(
         backgroundColor: primaryBlue,
         elevation: 0,
-        automaticallyImplyLeading:
-            false, // Kita handle navigasi lewat BottomNavBar
+        automaticallyImplyLeading: false, // Navigation handled by BottomNavBar
         title: const Text(
-          'History', // Judul dari Figma
+          'History', // Title from Figma
           style: TextStyle(
             color: primaryWhite,
-            fontSize: 18, // Ukuran dari Figma
+            fontSize: 18, // Size from Figma
             fontWeight: FontWeight.w500, // Medium
             fontFamily: 'Inter',
-            height: 1.27, // Sesuaikan line height jika perlu
+            height: 1.27, // Adjust line height if needed
           ),
         ),
-        centerTitle: true, // Pusatkan judul
-        // actions: [ -> Dihapus
+        centerTitle: true, // Center title
+        // actions: [ // Removed
         //   IconButton(
         //     icon: SvgPicture.asset(
         //       'assets/icons/question_icon.svg',
@@ -104,7 +103,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         //       height: 24,
         //     ),
         //     onPressed: () {
-        //       print('Tombol Bantuan ditekan');
+        //       print('Help button pressed');
         //     },
         //     tooltip: 'Help',
         //   ),
@@ -125,39 +124,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
         //   const SizedBox(width: 8),
         // ],
         systemOverlayStyle: const SystemUiOverlayStyle(
-          // Pastikan overlay AppBar konsisten
+          // Ensure AppBar overlay is consistent
           statusBarColor: primaryBlue,
           statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark, // Untuk iOS
+          statusBarBrightness: Brightness.dark, // For iOS
         ),
       ),
       body: Padding(
-        // Tambahkan padding horizontal
+        // Add horizontal padding
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
-            // --- Teks Deskripsi ---
+            // --- Description Text ---
             const Padding(
               padding: EdgeInsets.symmetric(
                 vertical: 16.0,
-              ), // Jarak atas dan bawah
+              ), // Top and bottom spacing
               child: Text(
                 'Recent conversations are deleted every time you close NetrAI.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: textColorBlack,
-                  fontSize: 9, // Ukuran dari Figma (node 123:1095)
-                  fontWeight: FontWeight.w500, // Medium (dari Figma)
+                  fontSize: 9, // Size from Figma (node 123:1095)
+                  fontWeight: FontWeight.w500, // Medium (from Figma)
                   fontFamily: 'Inter',
-                  height: 1.05, // Line height dari Figma
+                  height: 1.05, // Line height from Figma
                 ),
               ),
             ),
 
-            // --- Daftar Percakapan (History List) ---
+            // --- Conversation List (History List) ---
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 20), // Jarak bawah list
+                padding: const EdgeInsets.only(bottom: 20), // Bottom spacing for list
                 itemCount: _conversationItems.length,
                 itemBuilder: (context, index) {
                   final item = _conversationItems[index];
@@ -175,49 +174,49 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       // --- Bottom Navigation Bar ---
       // bottomNavigationBar:
-      //     const BottomNavBar(currentIndex: 1), // Index 1 untuk History -> Sementara dikomentari
+      //     const BottomNavBar(currentIndex: 1), // Index 1 for History -> Commented out for now
     );
   }
 
-  // --- Helper Widget untuk Bubble Chat ---
+  // --- Helper Widget for Chat Bubble ---
   Widget _buildConversationBubble({
     required String text,
     required bool isUser,
     required Color bubbleColor,
     required Color textColor,
   }) {
-    // Gaya teks sesuai Figma (node 123:1656, 123:1677, etc.)
+    // Text style according to Figma (node 123:1656, 123:1677, etc.)
     const TextStyle chatTextStyle = TextStyle(
       fontFamily: 'Inter',
       fontWeight: FontWeight.w500, // Medium
       fontSize: 9,
-      color: Colors.black, // Warna teks hitam di bubble
-      height: 1.5, // Line height dari Figma
+      color: Colors.black, // Black text color in bubble
+      height: 1.5, // Line height from Figma
     );
 
     return Align(
-      // Rata kiri untuk AI, rata kanan untuk User (meski di Figma semua kiri)
-      // Jika ingin semua kiri seperti Figma: alignment: Alignment.centerLeft,
+      // Align left for AI, right for User (though Figma shows all left)
+      // If all left is desired like Figma: alignment: Alignment.centerLeft,
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0),
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         constraints: BoxConstraints(
           maxWidth:
-              MediaQuery.of(context).size.width * 0.75, // Maks lebar bubble
+              MediaQuery.of(context).size.width * 0.75, // Max bubble width
         ),
         decoration: BoxDecoration(
-          // Jika AI, gunakan bubbleColor, jika User, bisa warna lain atau sama
-          color: isUser ? Colors.grey[300] : bubbleColor, // Contoh warna User
+          // If AI, use bubbleColor, if User, can be another color or same
+          color: isUser ? Colors.grey[300] : bubbleColor, // Example User color
           borderRadius: BorderRadius.circular(
             12.0,
-          ), // Radius bubble (sesuaikan jika perlu)
+          ), // Bubble radius (adjust if needed)
           boxShadow: const [
-            // Shadow dari Figma (effect_4AF1ZF)
+            // Shadow from Figma (effect_4AF1ZF)
             BoxShadow(
               color: Color.fromRGBO(0, 0, 0, 0.25),
               offset: Offset(0, 4),
-              blurRadius: 20, // Figma menggunakan 20px
+              blurRadius: 20, // Figma uses 20px
             ),
           ],
         ),
@@ -225,22 +224,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
   }
-  // --- Akhir Helper Widget ---
+  // --- End of Helper Widget ---
 
-  // Helper widget untuk membangun setiap item list history
+  // Helper widget to build each history list item
   // Widget _buildHistoryListItem(Map<String, dynamic> item) {
   //   const Color listTileSubtitleColor = Color(0xFF6B7280);
-  //   // Format tanggal (contoh: Jan 1, 10:30 AM)
+  //   // Date format (example: Jan 1, 10:30 AM)
   //   final String formattedDate =
   //       '${_formatMonth(item['timestamp'].month)} ${item['timestamp'].day}, ${_formatTime(item['timestamp'])}';
   //
   //   return ListTile(
-  //     tileColor: Colors.white, // Latar belakang item list
+  //     tileColor: Colors.white, // List item background
   //     leading: Container(
-  //       width: 50, // Ukuran thumbnail
+  //       width: 50, // Thumbnail size
   //       height: 50,
-  //       color: Colors.grey[200], // Warna placeholder thumbnail
-  //       // Ganti dengan Image.asset(item['thumbnail']) jika gambar tersedia
+  //       color: Colors.grey[200], // Thumbnail placeholder color
+  //       // Replace with Image.asset(item['thumbnail']) if image is available
   //       child: Icon(
   //         item['type'] == 'video'
   //             ? Icons.videocam_outlined
@@ -266,36 +265,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   //     ),
   //     trailing: const Icon(Icons.chevron_right, color: Colors.grey),
   //     onTap: () {
-  //       print('History Item ${item['title']} ditekan');
-  //       // TODO: Implementasi navigasi ke detail history
+  //       print('History Item ${item['title']} pressed');
+  //       // TODO: Implement navigation to history detail
   //     },
   //     contentPadding: const EdgeInsets.symmetric(
   //       vertical: 8.0,
   //       horizontal: 16.0,
-  //     ), // Padding internal
+  //     ), // Internal padding
   //   );
   // }
   //
-  // // Helper untuk format bulan
+  // // Helper to format month
   // String _formatMonth(int month) {
   //   const months = [
-  //     'Jan',
-  //     'Feb',
-  //     'Mar',
-  //     'Apr',
-  //     'May',
-  //     'Jun',
-  //     'Jul',
-  //     'Aug',
-  //     'Sep',
-  //     'Oct',
-  //     'Nov',
-  //     'Dec'
+  //     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  //     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   //   ];
   //   return months[month - 1];
   // }
   //
-  // // Helper untuk format waktu
+  // // Helper to format time
   // String _formatTime(DateTime time) {
   //   final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
   //   final minute = time.minute.toString().padLeft(2, '0');

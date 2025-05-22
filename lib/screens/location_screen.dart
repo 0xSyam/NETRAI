@@ -19,56 +19,52 @@ class LocationScreen extends StatefulWidget {
 
 class _LocationScreenState extends State<LocationScreen> {
   Completer<GoogleMapController> _controller = Completer();
-  static const LatLng _center =
-      LatLng(-6.200000, 106.816666); // Default Jakarta
+  static const LatLng _center = LatLng(-6.200000, 106.816666); // Default to Jakarta
   LatLng? _currentPosition;
-  LatLng? _tunaNetraPosition; // Addition: visually impaired user position
+  LatLng? _tunaNetraPosition; // Visually impaired user's position
   final Set<Marker> _markers = {};
-  MapType _currentMapType = MapType.normal; // Add state for map type
-  Timer? _tunaNetraLocationTimer; // Timer for auto-refresh
-  Timer? _userLocationTimer; // Timer for updating user location
-  StreamSubscription<DocumentSnapshot>?
-      _tunaNetraLocationStream; // Stream for real-time location changes
-  bool _autoFocusToTunaNetra = true; // Flag to control auto-focus
-  bool _isInitialLoad = true; // Flag to detect initial load
+  MapType _currentMapType = MapType.normal;
+  Timer? _tunaNetraLocationTimer; // Timer for auto-refreshing visually impaired user's location
+  Timer? _userLocationTimer; // Timer for updating this user's location
+  StreamSubscription<DocumentSnapshot>? _tunaNetraLocationStream; // Stream for real-time location updates
+  bool _autoFocusToTunaNetra = true; // Flag to control auto-focus on visually impaired user
+  bool _isInitialLoad = true; // Flag to detect initial map load
 
   @override
   void initState() {
     super.initState();
     _getUserLocation();
-    _setupUserLocationAutoUpdate(); // Update user position periodically
-    _setupTunaNetraLocationStream(); // Switch to method that uses stream
+    _setupUserLocationAutoUpdate();
+    _setupTunaNetraLocationStream();
   }
 
-  // New method for periodically updating user position
   void _setupUserLocationAutoUpdate() {
-    // Update user position every 30 seconds
+    // Update this user's position every 30 seconds
     _userLocationTimer?.cancel();
-    _userLocationTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+    _userLocationTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _updateUserLocation();
     });
   }
 
-  // Method to update user location without displaying error messages
   Future<void> _updateUserLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) return;
 
       LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) return;
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
 
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
-      setState(() {
-        _currentPosition = LatLng(position.latitude, position.longitude);
-        _addMarkers(); // Update markers
-      });
-    } catch (e) {
-      // Handle error silently (no need to display message to user)
-      print('Error updating user location: $e');
+      if (mounted) {
+        setState(() {
+          _currentPosition = LatLng(position.latitude, position.longitude);
+          _addMarkers();
+        });
+      }
+    } catch (e, st) {
+      // Handle error silently for background updates
+      print('Error updating user location: $e\nStack: $st');
     }
   }
 
@@ -78,11 +74,10 @@ class _LocationScreenState extends State<LocationScreen> {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Location services not enabled, don't proceed
-      // or ask user to enable location services
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content:
-              Text('Location services are disabled. Please enable services')));
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Location services are disabled. Please enable them.')));
+      }
       return;
     }
 
@@ -90,56 +85,53 @@ class _LocationScreenState extends State<LocationScreen> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permission denied')));
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Location permission denied.')));
+        }
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Location permissions permanently denied, we cannot request permissions.')));
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Location permissions are permanently denied; we cannot request permissions.')));
+      }
       return;
     }
 
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    setState(() {
-      _currentPosition = LatLng(position.latitude, position.longitude);
-      _addMarkers(); // Call again to update markers with current location
-
-      // Only focus on user location if there's no visually impaired user location
-      // We prioritize focusing on visually impaired user location
-      if (_tunaNetraPosition == null) {
-        _goToCurrentLocation(); // Move camera to current location
-      }
-    });
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    if (mounted) {
+      setState(() {
+        _currentPosition = LatLng(position.latitude, position.longitude);
+        _addMarkers();
+        if (_tunaNetraPosition == null) { // Prioritize visually impaired user if their location is known
+          _goToCurrentLocation();
+        }
+      });
+    }
   }
 
   void _addMarkers() {
-    _markers.clear(); // Clear old markers before adding new ones
+    _markers.clear();
 
     if (_currentPosition != null) {
       _markers.add(
         Marker(
           markerId: const MarkerId('currentLocation'),
           position: _currentPosition!,
-          infoWindow: const InfoWindow(title: 'You'), // Change label to "You"
-          icon:
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          infoWindow: const InfoWindow(title: 'You'),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         ),
       );
     }
-    // Add visually impaired user marker if available
     if (_tunaNetraPosition != null) {
       _markers.add(
         Marker(
           markerId: const MarkerId('tunaNetraLocation'),
           position: _tunaNetraPosition!,
-          infoWindow: const InfoWindow(
-              title:
-                  'Your Family Member'), // Change label to "Your Family Member"
+          infoWindow: const InfoWindow(title: 'Your Family Member'),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         ),
       );
@@ -150,78 +142,52 @@ class _LocationScreenState extends State<LocationScreen> {
     if (_currentPosition == null) return;
     final GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(
-      CameraPosition(
-        target: _currentPosition!,
-        zoom: 14.0,
-      ),
+      CameraPosition(target: _currentPosition!, zoom: 14.0),
     ));
   }
 
-  // New method to focus on visually impaired user location
   Future<void> _goToTunaNetraLocation() async {
     if (_tunaNetraPosition == null) return;
     final GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(
-      CameraPosition(
-        target: _tunaNetraPosition!,
-        zoom: 16.0, // Slightly more zoomed to see details
-      ),
+      CameraPosition(target: _tunaNetraPosition!, zoom: 16.0), // Slightly more zoomed
     ));
   }
 
-  // Replace _goToLovedOneLocation function with _toggleMapType
   void _toggleMapType() {
     setState(() {
-      _currentMapType = _currentMapType == MapType.normal
-          ? MapType.satellite
-          : MapType.normal;
+      _currentMapType = _currentMapType == MapType.normal ? MapType.satellite : MapType.normal;
     });
   }
 
-  // Toggle auto-focus to visually impaired user location
   void _toggleAutoFocus() {
     setState(() {
       _autoFocusToTunaNetra = !_autoFocusToTunaNetra;
     });
-
-    // Show status message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_autoFocusToTunaNetra
-            ? 'Auto-focus to visually impaired user location: ON'
-            : 'Auto-focus to visually impaired user location: OFF'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    if(mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Auto-focus to family member: ${_autoFocusToTunaNetra ? 'ON' : 'OFF'}'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
-  // New method to set up stream that monitors visually impaired user location changes in real-time
   Future<void> _setupTunaNetraLocationStream() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
-      // Check if user is a family member and connected to visually impaired user
-      if (!userDoc.exists ||
-          !userDoc.data()!.containsKey('role') ||
-          userDoc['role'] != 'keluarga') {
-        return;
-      }
+      if (!userDoc.exists || userDoc.data()?['role'] != 'keluarga') return;
 
       final linkedTo = userDoc['linkedTo'];
-      if (linkedTo == null || linkedTo.toString().isEmpty) {
-        return;
-      }
+      if (linkedTo == null || linkedTo.toString().isEmpty) return;
 
-      // Cancel existing stream if any
-      _tunaNetraLocationStream?.cancel();
+      _tunaNetraLocationStream?.cancel(); // Cancel any existing stream
 
-      // Register stream to listen for visually impaired user location changes
       _tunaNetraLocationStream = FirebaseFirestore.instance
           .collection('users')
           .doc(linkedTo)
@@ -229,147 +195,93 @@ class _LocationScreenState extends State<LocationScreen> {
           .listen((documentSnapshot) {
         if (documentSnapshot.exists) {
           final data = documentSnapshot.data();
-          if (data != null && data.containsKey('lastLocation')) {
-            final lastLocation = data['lastLocation'];
-            if (lastLocation != null &&
-                lastLocation['lat'] != null &&
-                lastLocation['lng'] != null) {
-              // Save last position for comparison if position changes
-              final lastPosition = _tunaNetraPosition;
-              final newPosition = LatLng(
-                lastLocation['lat'],
-                lastLocation['lng'],
-              );
+          final lastLocation = data?['lastLocation'];
+          if (lastLocation != null && lastLocation['lat'] != null && lastLocation['lng'] != null) {
+            final lastKnownPosition = _tunaNetraPosition;
+            final newPosition = LatLng(lastLocation['lat'], lastLocation['lng']);
 
+            if (mounted) {
               setState(() {
                 _tunaNetraPosition = newPosition;
-                _addMarkers(); // Update markers
+                _addMarkers();
               });
+            }
 
-              // Focus on visually impaired user location in 2 cases:
-              // 1. If this is initial load
-              // 2. If auto-focus active and position changes
-              if (_isInitialLoad ||
-                  (_autoFocusToTunaNetra &&
-                      (lastPosition == null ||
-                          lastPosition.latitude != newPosition.latitude ||
-                          lastPosition.longitude != newPosition.longitude))) {
-                _goToTunaNetraLocation();
+            bool positionChanged = lastKnownPosition == null ||
+                                   lastKnownPosition.latitude != newPosition.latitude ||
+                                   lastKnownPosition.longitude != newPosition.longitude;
 
-                // After first focus, mark initial load as done
-                if (_isInitialLoad) {
-                  _isInitialLoad = false;
-                }
-              }
+            if (_isInitialLoad || (_autoFocusToTunaNetra && positionChanged)) {
+              _goToTunaNetraLocation();
+              if (_isInitialLoad) _isInitialLoad = false;
             }
           }
         }
-      }, onError: (error) {
-        print('Error in visually impaired user location stream: $error');
+      }, onError: (error, st) { // Added stack trace to log
+        print('Error in visually impaired user location stream: $error\nStack: $st');
       });
 
-      // Keep using timer as fallback, but reduce frequency
+      // Fallback timer, less frequent
       _tunaNetraLocationTimer?.cancel();
-      _tunaNetraLocationTimer = Timer.periodic(Duration(minutes: 2), (timer) {
-        // Only as fallback if stream fails
-        getTunaNetraLocation();
+      _tunaNetraLocationTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
+        getTunaNetraLocation(); // Only as a fallback
       });
 
-      // Get initial location
-      getTunaNetraLocation();
-    } catch (e) {
-      print('Error setting up visually impaired user location stream: $e');
+      getTunaNetraLocation(); // Initial fetch
+    } catch (e, st) { // Added stack trace to log
+      print('Error setting up visually impaired user location stream: $e\nStack: $st');
     }
   }
 
-  // Get visually impaired user location connected (specific to family role)
   Future<void> getTunaNetraLocation() async {
-    final keluargaUid = FirebaseAuth.instance.currentUser?.uid;
-    if (keluargaUid == null) return;
+    try {
+      final keluargaUid = FirebaseAuth.instance.currentUser?.uid;
+      if (keluargaUid == null) return;
 
-    final keluargaDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(keluargaUid)
-        .get();
+      final keluargaDoc = await FirebaseFirestore.instance.collection('users').doc(keluargaUid).get();
+      final linkedTo = keluargaDoc['linkedTo'];
+      if (linkedTo == null) return;
 
-    final linkedTo = keluargaDoc['linkedTo'];
-    if (linkedTo == null) return;
+      final tunaNetraDoc = await FirebaseFirestore.instance.collection('users').doc(linkedTo).get();
+      final lastLocation = tunaNetraDoc['lastLocation'];
 
-    final tunaNetraDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(linkedTo)
-        .get();
-
-    final lastLocation = tunaNetraDoc['lastLocation'];
-    if (lastLocation != null &&
-        lastLocation['lat'] != null &&
-        lastLocation['lng'] != null) {
-      setState(() {
-        _tunaNetraPosition = LatLng(
-          lastLocation['lat'],
-          lastLocation['lng'],
-        );
-        _addMarkers();
-      });
-
-      // Focus on visually impaired user location if auto-focus is active
-      // or if this is first time loading
-      if (_autoFocusToTunaNetra || _isInitialLoad) {
-        _goToTunaNetraLocation();
-
-        // After first focus, mark initial load as done
-        if (_isInitialLoad) {
-          _isInitialLoad = false;
+      if (lastLocation != null && lastLocation['lat'] != null && lastLocation['lng'] != null) {
+        if (mounted) {
+          setState(() {
+            _tunaNetraPosition = LatLng(lastLocation['lat'], lastLocation['lng']);
+            _addMarkers();
+          });
+        }
+        if (_autoFocusToTunaNetra || _isInitialLoad) {
+          _goToTunaNetraLocation();
+          if (_isInitialLoad) _isInitialLoad = false;
         }
       }
+    } catch (e, st) { // Added stack trace to log
+      print("Error fetching visually impaired user's location: $e\nStack: $st");
     }
   }
 
-  // Auto-refresh visually impaired user location every 30 seconds (only if family role)
-  // This method is no longer used, replaced by _setupTunaNetraLocationStream
-  void _startTunaNetraLocationAutoRefresh() async {
-    final keluargaUid = FirebaseAuth.instance.currentUser?.uid;
-    if (keluargaUid == null) return;
-    final keluargaDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(keluargaUid)
-        .get();
-    final role = keluargaDoc['role'];
-    if (role == 'keluarga') {
-      // Start auto-refresh timer
-      _tunaNetraLocationTimer?.cancel();
-      _tunaNetraLocationTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-        getTunaNetraLocation();
-      });
-      // Get first time
-      getTunaNetraLocation();
-    }
-  }
+  // _startTunaNetraLocationAutoRefresh is effectively replaced by _setupTunaNetraLocationStream and its fallback timer.
 
   @override
   void dispose() {
     _tunaNetraLocationTimer?.cancel();
-    _userLocationTimer?.cancel(); // Cancel user location update timer
-    _tunaNetraLocationStream?.cancel(); // Cancel stream when widget is disposed
+    _userLocationTimer?.cancel();
+    _tunaNetraLocationStream?.cancel();
     super.dispose();
   }
 
-  // Add function to open Google Maps with navigation directions
-  Future<void> _openGoogleMapsDirections(
-      LatLng origin, LatLng destination) async {
+  Future<void> _openGoogleMapsDirections(LatLng origin, LatLng destination) async {
     try {
-      final String url =
-          'https://www.google.com/maps/dir/?api=1&origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&travelmode=driving';
+      final String url = 'https://www.google.com/maps/dir/?api=1&origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&travelmode=driving';
       final Uri uri = Uri.parse(url);
 
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        // If cannot open Google Maps app, try opening in browser
-        final String webUrl =
-            'https://www.google.com/maps/dir/${origin.latitude},${origin.longitude}/${destination.latitude},${destination.longitude}';
+        final String webUrl = 'https://www.google.com/maps/dir/${origin.latitude},${origin.longitude}/${destination.latitude},${destination.longitude}';
         final Uri webUri = Uri.parse(webUrl);
-
         if (await canLaunchUrl(webUri)) {
           await launchUrl(webUri, mode: LaunchMode.externalApplication);
         } else {
@@ -377,82 +289,59 @@ class _LocationScreenState extends State<LocationScreen> {
         }
       }
     } catch (e) {
-      rethrow; // Re-throw error for processing in calling function
+      rethrow; 
     }
   }
 
-  // New function to get direction to visually impaired user using service
   Future<void> _getDirectionToTunaNetra() async {
     try {
-      // Show loading
+      if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Getting direction to visually impaired user...')),
+        const SnackBar(content: Text('Getting direction to family member...')), // Translated
       );
 
-      // Check if there's a user logged in
       if (FirebaseAuth.instance.currentUser == null) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please log in first')),
+          const SnackBar(content: Text('Please log in first.')), // Translated
         );
         return;
       }
 
-      // Check and get user document
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).get();
 
       if (!userDoc.exists) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content:
-                  Text('User data not found, please logout and log in again')),
+          const SnackBar(content: Text('User data not found. Please log in again.')), // Translated
         );
         return;
       }
 
       final userData = userDoc.data();
-      if (userData == null ||
-          userData['linkedTo'] == null ||
-          userData['linkedTo'].toString().isEmpty) {
+      if (userData == null || userData['linkedTo'] == null || userData['linkedTo'].toString().isEmpty) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('You are not connected to visually impaired user')),
+          const SnackBar(content: Text('You are not linked to a family member\'s account.')), // Translated
         );
         return;
       }
 
-      // Use LocationUpdateService to get URL and timestamp information
-      final Map<String, dynamic> result =
-          await LocationUpdateService.getGoogleMapsDirectionUrl(
-              _currentPosition);
-
-      // Get URL from result
+      final Map<String, dynamic> result = await LocationUpdateService.getGoogleMapsDirectionUrl(_currentPosition);
       final String url = result['url'];
       final Uri uri = Uri.parse(url);
-
-      // Get last update timestamp
       final lastUpdateTime = result['lastUpdateTime'];
-      final email = result['email'] ?? 'visually impaired user';
+      final email = result['email'] ?? 'family member'; // Translated
+      final formattedTime = LocationUpdateService.formatTimestamp(lastUpdateTime);
 
-      // Format timestamp to readable string
-      final formattedTime =
-          LocationUpdateService.formatTimestamp(lastUpdateTime);
-
-      // Close loading SnackBar if still open
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if(!mounted) return;
 
-      // Show confirmation dialog with last update timestamp information
       bool? confirm = await showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Visually Impaired User Location Information'),
+            title: const Text('Family Member Location Information'), // Translated
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,23 +350,20 @@ class _LocationScreenState extends State<LocationScreen> {
                 const SizedBox(height: 8),
                 Text('Last updated: $formattedTime'),
                 const SizedBox(height: 16),
-                Text(
-                  'Please ensure location is sufficiently accurate before navigating.',
+                const Text( // Translated
+                  'Please ensure the location is sufficiently accurate before navigating.',
                   style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
                 ),
               ],
             ),
             actions: [
               TextButton(
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
                 onPressed: () => Navigator.of(context).pop(false),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3A59D1),
-                ),
-                child: Text('Open Google Maps',
-                    style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3A59D1)),
+                child: const Text('Open Google Maps', style: TextStyle(color: Colors.white)),
                 onPressed: () => Navigator.of(context).pop(true),
               ),
             ],
@@ -485,53 +371,42 @@ class _LocationScreenState extends State<LocationScreen> {
         },
       );
 
-      // If confirmed, open Google Maps
       if (confirm == true) {
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
-          throw 'Cannot open Google Maps';
+          throw 'Cannot open Google Maps.'; // Translated
         }
       }
-    } catch (e) {
-      // Close loading SnackBar if still open
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-      // Check error type for giving appropriate message
+    } catch (e, st) { // Added stack trace to log
+      if(mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
       String errorMessage = 'Failed to get direction: ';
-
       if (e.toString().contains('linkedTo')) {
-        errorMessage = 'You are not connected to visually impaired user';
+        errorMessage = 'You are not linked to a family member\'s account.'; // Translated
       } else if (e.toString().contains('lastLocation')) {
-        errorMessage = 'Visually impaired user location not available';
-      } else if (e
-          .toString()
-          .contains('Visually impaired user location not available')) {
-        errorMessage = 'Visually impaired user location not available';
+        errorMessage = 'Family member\'s location not available.'; // Translated
+      } else if (e.toString().contains('Visually impaired user location not available')) { // Kept specific check just in case
+        errorMessage = 'Family member\'s location not available.'; // Translated
       } else {
         errorMessage += e.toString();
       }
-
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+      }
+      print("Error in _getDirectionToTunaNetra: $e\nStack: $st"); // Log with stack trace
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get screen size for adjustment
-    // final screenHeight = MediaQuery.of(context).size.height;
-    // final screenWidth = MediaQuery.of(context).size.width;
+    // final screenHeight = MediaQuery.of(context).size.height; // Example of unused variable
+    // final screenWidth = MediaQuery.of(context).size.width; // Example of unused variable
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      // Don't use default AppBar, we create custom header
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: true, // Custom header means map draws behind it
       body: Stack(
         children: [
-          // Layer 1: Google Map
           GoogleMap(
             onMapCreated: (GoogleMapController controller) {
               if (!_controller.isCompleted) {
@@ -543,35 +418,31 @@ class _LocationScreenState extends State<LocationScreen> {
               zoom: 11.0,
             ),
             markers: _markers,
-            mapType: _currentMapType, // Use state map type
-            myLocationEnabled: true, // Show my location button & blue dot
-            myLocationButtonEnabled: false, // We will use custom FAB
-            zoomControlsEnabled: false, // Disable default zoom buttons
+            mapType: _currentMapType,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false, // Using custom FAB for this
+            zoomControlsEnabled: false, // Using custom FABs for zoom potentially or other controls
           ),
 
-          // Layer 2: Custom Header
-          // Node: 268:1743 (Header Group)
+          // Custom Header
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 56.0 + topPadding, // kToolbarHeight + statusBarHeight
+              height: 56.0 + topPadding, // Standard AppBar height + status bar
               padding: EdgeInsets.only(
                 top: topPadding,
                 left: 16.0,
                 right: 16.0,
               ),
-              // Background color from Figma (Rectangle 25 or Rectangle 13)
-              // Rectangle 13 (268:1745) has fill #3A59D1
-              color: const Color(0xFF3A59D1),
+              color: const Color(0xFF3A59D1), // Figma: Rectangle 13
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Node: 268:1747 (Teks "View")
                   const Text(
-                    'View Location', // Change title
+                    'View Location', // Updated title
                     style: TextStyle(
                       fontFamily: 'Inter',
                       color: Colors.white,
@@ -582,51 +453,32 @@ class _LocationScreenState extends State<LocationScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Node: 268:1748 (Ikon "Question_light")
                       IconButton(
-                        icon: const Icon(
-                          Icons.help_outline, // Use standard icon
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                        icon: const Icon(Icons.help_outline, color: Colors.white, size: 24),
                         onPressed: () {
-                          // Action for help button
+                          // TODO: Implement help action
                         },
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
                       const SizedBox(width: 8),
-                      // Avatar (Placeholder, take from design if more detail)
-                      // Referring to Rectangle 15 (268:1746) which is circular
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const FamilyAccountWrapper(),
-                            ),
+                            MaterialPageRoute(builder: (context) => const FamilyAccountWrapper()),
                           );
                         },
                         child: StreamBuilder<User?>(
                           stream: FirebaseAuth.instance.authStateChanges(),
                           builder: (context, snapshot) {
-                            final user = snapshot.data ??
-                                FirebaseAuth.instance.currentUser;
-                            final hasProfilePic = user != null &&
-                                user.photoURL != null &&
-                                user.photoURL!.isNotEmpty;
-
+                            final user = snapshot.data ?? FirebaseAuth.instance.currentUser;
+                            final hasProfilePic = user?.photoURL != null && user!.photoURL!.isNotEmpty;
                             return CircleAvatar(
                               radius: 16,
                               backgroundColor: Colors.white,
-                              backgroundImage: hasProfilePic
-                                  ? NetworkImage(user!.photoURL!)
-                                  : null,
-                              child: hasProfilePic
-                                  ? null
-                                  : const Icon(Icons.person,
-                                      size: 18, color: Color(0xFF3A59D1)),
+                              backgroundImage: hasProfilePic ? NetworkImage(user!.photoURL!) : null,
+                              child: hasProfilePic ? null : const Icon(Icons.person, size: 18, color: Color(0xFF3A59D1)),
                             );
                           },
                         ),
@@ -638,51 +490,37 @@ class _LocationScreenState extends State<LocationScreen> {
             ),
           ),
 
-          // Layer 4: FABs (Floating Action Buttons)
-          // Node: 268:1783 (Group 38 - Top Right Button) -> arrow icon
-          // Node: 316:625 (Group 39 - Fill Pin Button) -> pin fill icon
-          // Node: 316:630 (Group 40 - Light Pin Button) -> pin light icon
+          // FABs
           Positioned(
-            bottom: 90, // Align with middle button
+            bottom: 90, 
             right: 16,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Top FAB (referring to Arrow_alt_ltop in Group 38 / 268:1785)
-                // Change icon to be more suitable with image (my_location / gps_fixed)
                 FloatingActionButton(
                   heroTag: 'fab_my_location',
                   mini: true,
-                  onPressed: _goToCurrentLocation, // Move to user location
-                  backgroundColor: Colors.white, // Changed from blue to white
-                  child: const Icon(Icons.my_location,
-                      color: Color(0xFF3A59D1)), // Changed from white to blue
+                  onPressed: _goToCurrentLocation,
+                  backgroundColor: Colors.white,
+                  child: const Icon(Icons.my_location, color: Color(0xFF3A59D1)),
                 ),
                 const SizedBox(height: 16),
-                // Button to focus on visually impaired user location
                 FloatingActionButton(
                   heroTag: 'fab_tuna_netra_location',
                   mini: true,
-                  onPressed:
-                      _goToTunaNetraLocation, // Move to visually impaired user location
-                  backgroundColor: Colors.white, // Changed from blue to white
-                  child: const Icon(Icons.person_pin_circle,
-                      color: Color(0xFF3A59D1)), // Changed from white to blue
+                  onPressed: _goToTunaNetraLocation,
+                  backgroundColor: Colors.white,
+                  child: const Icon(Icons.person_pin_circle, color: Color(0xFF3A59D1)),
                 ),
                 const SizedBox(height: 16),
-                // Middle FAB (referring to Pin_fill in Group 39 / 316:657)
-                // Change icon and function for toggle map type
                 FloatingActionButton(
-                  heroTag: 'fab_toggle_map_type', // Different tag
+                  heroTag: 'fab_toggle_map_type',
                   mini: true,
-                  onPressed: _toggleMapType, // Change map type
-                  backgroundColor: Colors.white, // Changed from blue to white
+                  onPressed: _toggleMapType,
+                  backgroundColor: Colors.white,
                   child: Icon(
-                      _currentMapType == MapType.normal
-                          ? Icons.satellite // Icon for satellite mode
-                          : Icons.map, // Icon for normal/street mode
-                      color: const Color(
-                          0xFF3A59D1)), // Changed from white to blue
+                      _currentMapType == MapType.normal ? Icons.satellite : Icons.map,
+                      color: const Color(0xFF3A59D1)),
                 ),
               ],
             ),
@@ -691,23 +529,19 @@ class _LocationScreenState extends State<LocationScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: ElevatedButton.icon(
-        icon: const Icon(Icons.directions,
-            color: Colors.white), // Diubah dari biru ke putih
+        icon: const Icon(Icons.directions, color: Colors.white), // Icon color white
         label: const Text(
           'Get Direction',
           style: TextStyle(
-            color: Colors.white, // Diubah dari biru ke putih
+            color: Colors.white, // Text color white
             fontFamily: 'Inter',
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
         ),
-        onPressed: () async {
-          // Use new function that utilizes LocationUpdateService
-          _getDirectionToTunaNetra();
-        },
+        onPressed: _getDirectionToTunaNetra,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF3A59D1), // Diubah dari putih ke biru
+          backgroundColor: const Color(0xFF3A59D1), // Button color blue
           shape: const StadiumBorder(),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           elevation: 5,
@@ -716,74 +550,62 @@ class _LocationScreenState extends State<LocationScreen> {
     );
   }
 
-  // Widget for location marker (Your Loved One)
-  // Node: 334:2027
+  // Widget for location marker (Your Loved One) - This seems unused in the current build method
+  // If it's intended for future use or was part of a previous design, it can be kept.
+  // For now, it's not directly rendered by the main build method.
+  // Consider removing if it's definitely not needed to reduce dead code.
   Widget _buildLocationMarker() {
-    // Size based on Figma
-    // point (circle inside): diameter around 10-12px (stroke 4px)
-    // blur (circle outside): diameter around 30-35px
-    // Vector 2 (pin shape): size around 50x70px
+    // ... (code for _buildLocationMarker - no translations needed here, comments are for understanding Figma)
     return SizedBox(
-      width: 70, // Approximate total width
-      height: 90, // Approximate total height
+      width: 70, 
+      height: 90, 
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
-          // Bottom pin part (Vector 2 / I334:2027;1:712) - Gradient
           Positioned(
-            bottom: 20, // Adjust to make pin end pass through center of circle
+            bottom: 20, 
             child: Container(
-              width: 50, // Pin base width
-              height: 50, // Pin base height (before narrowing)
+              width: 50, 
+              height: 50, 
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF3A59D1)
-                        .withOpacity(0.0), // More transparent above
-                    const Color(0xFF3A59D1)
-                        .withOpacity(0.3), // Slightly more dense below
+                    const Color(0xFF3A59D1).withOpacity(0.0), 
+                    const Color(0xFF3A59D1).withOpacity(0.3), 
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
-                // Make shape more like pin end
-                borderRadius: const BorderRadius.all(
-                    Radius.circular(25)), // Full circle if width=height
-                // If want more like inverted water drop, need CustomPaint or SVG image
+                borderRadius: const BorderRadius.all(Radius.circular(25)),
               ),
             ),
           ),
-          // Outer circle (blur / I334:2027;1:713)
           Positioned(
-            bottom: 10, // Adjust position to make pin appear above
+            bottom: 10, 
             child: Container(
-              width: 36, // Diameter
-              height: 36, // Diameter
+              width: 36, 
+              height: 36, 
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF3A59D1).withOpacity(0.1), // fill_VCQS1G
+                color: const Color(0xFF3A59D1).withOpacity(0.1), 
                 border: Border.all(
-                  color: const Color(0xFF8B9DE4), // stroke_KIJ3F6
-                  width: 0.5, // Slightly thicker than 0.3
+                  color: const Color(0xFF8B9DE4), 
+                  width: 0.5, 
                 ),
               ),
             ),
           ),
-          // Inner circle (point / I334:2027;1:714) - Adjusted to image
           Positioned(
-            // Center in circle blur, bottom: 10 (blur_bottom_pos) + (blur_diameter - point_diameter)/2
             bottom: 10 + (36 - 16) / 2,
             child: Container(
-              width: 16, // Diameter
-              height: 16, // Diameter
+              width: 16, 
+              height: 16, 
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white, // ISI PUTIH (according to image)
+                color: Colors.white, 
                 border: Border.all(
-                  color: const Color(
-                      0xFF3A59D1), // BIRU BORDER (according to image)
-                  width:
-                      3, // Border width adjusted to look like image (previously 4)
+                  color: const Color(0xFF3A59D1), 
+                  width: 3, 
                 ),
               ),
             ),

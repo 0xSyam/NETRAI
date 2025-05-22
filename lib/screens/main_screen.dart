@@ -11,15 +11,15 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0; // Indeks untuk layar yang aktif
+  int _selectedIndex = 0; // Index for the active screen
 
-  // Daftar layar yang akan ditampilkan
+  // List of screens to be displayed
   static final List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
-    HistoryScreen(),
+    const HomeScreen(), // Added const
+    const HistoryScreen(), // Added const
   ];
 
-  // Fungsi untuk mengubah layar saat item nav ditekan
+  // Function to change the screen when a nav item is pressed
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -28,13 +28,13 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Warna dari Figma
+    // Colors from Figma design
     const Color primaryBlue = Color(0xFF3A58D0);
     const Color primaryWhite = Colors.white;
     const Color inactiveGrey = Color(0xFFB5C0ED);
 
     return Scaffold(
-      // Body akan menampilkan layar sesuai _selectedIndex
+      // Body will display the screen according to _selectedIndex
       body: IndexedStack(index: _selectedIndex, children: _widgetOptions),
       // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
@@ -60,15 +60,15 @@ class _MainScreenState extends State<MainScreen> {
             label: 'History',
           ),
         ],
-        currentIndex: _selectedIndex, // Item yang aktif
-        selectedItemColor: primaryWhite, // Warna teks item aktif
-        unselectedItemColor: inactiveGrey, // Warna teks item tidak aktif
-        onTap: _onItemTapped, // Fungsi saat item ditekan
-        backgroundColor: primaryBlue, // Warna latar belakang nav
-        type: BottomNavigationBarType.fixed, // Tipe agar label selalu tampil
-        selectedFontSize: 12, // Ukuran font label
+        currentIndex: _selectedIndex, // Active item
+        selectedItemColor: primaryWhite, // Active item text color
+        unselectedItemColor: inactiveGrey, // Inactive item text color
+        onTap: _onItemTapped, // Function when item is pressed
+        backgroundColor: primaryBlue, // Nav background color
+        type: BottomNavigationBarType.fixed, // Type so labels always appear
+        selectedFontSize: 12, // Label font size
         unselectedFontSize: 12,
-        elevation: 0, // Tidak ada shadow
+        elevation: 0, // No shadow
       ),
     );
   }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart'; // Import SystemChrome
-import 'login_screen.dart'; // Use relative path
-// import 'package:netrai/screens/privacy_policy_screen.dart'; // Remove Privacy Policy Screen import
-import '../services/auth_service.dart'; // Add AuthService import
-import 'location_screen.dart'; // Add LocationScreen import
+// import 'login_screen.dart'; // LoginScreen is currently commented out
+// import 'package:netrai/screens/privacy_policy_screen.dart'; // Privacy Policy Screen import removed
+import '../services/auth_service.dart';
+import 'location_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -16,12 +16,9 @@ class WelcomeScreen extends StatelessWidget {
     required String description,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 7.0,
-      ), // Distance between items from Figma (gap: 7)
+      padding: const EdgeInsets.only(bottom: 7.0), // Distance between items from Figma (gap: 7)
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.center, // Align items vertically centered
+        crossAxisAlignment: CrossAxisAlignment.center, // Align items vertically centered
         children: [
           SvgPicture.asset(
             iconPath,
@@ -30,9 +27,7 @@ class WelcomeScreen extends StatelessWidget {
             // Feature icon color (adjust if needed, Figma varies)
             // colorFilter: ColorFilter.mode(const Color(0xFF3A58D0), BlendMode.srcIn),
           ),
-          const SizedBox(
-            width: 19.0,
-          ), // Distance between icon and text from Figma (gap: 19)
+          const SizedBox(width: 19.0), // Distance between icon and text from Figma (gap: 19)
           Expanded(
             child: Text(
               description,
@@ -63,10 +58,10 @@ class WelcomeScreen extends StatelessWidget {
 
     const double horizontalPadding = 35.0; // Side padding
     const double buttonHeight = 51.0;
-    const double imageSize = 200.0; // Size for placeholder icon
+    // const double imageSize = 200.0; // Size for placeholder icon, currently unused
 
     // Get status bar height for manual padding
-    // final double statusBarHeight = MediaQuery.of(context).padding.top; <<-- No longer needed
+    // final double statusBarHeight = MediaQuery.of(context).padding.top; // No longer needed
 
     return Scaffold(
       backgroundColor: Colors.white, // Default white body background
@@ -88,7 +83,7 @@ class WelcomeScreen extends StatelessWidget {
           // Ensure consistent overlay
           statusBarColor: Color(0xFF3A58D0),
           statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.dark, // For iOS
         ),
       ),
       body: Padding(
@@ -128,23 +123,21 @@ class WelcomeScreen extends StatelessWidget {
                     _buildFeatureItem(
                       iconPath: 'assets/icons/lamp_icon.svg',
                       description:
-                          'Get real-time guidance! NetrAI provides helpful voice tips when using the camera—letting you know if you\\\'re too close, too shaky, or need to adjust your angle.',
+                          'Get real-time guidance! NetrAI provides helpful voice tips when using the camera—letting you know if you\'re too close, too shaky, or need to adjust your angle.',
                     ),
                     _buildFeatureItem(
                       iconPath: 'assets/icons/Pin_fill.svg',
                       description:
                           'NetrAI helps families stay connected by sharing live location, so loved ones can feel close and supported—wherever they are.',
                     ),
-                    // Add some space at the end of the scrollable list if needed
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 20), // Space at the end of the scrollable list
                   ],
                 ),
               ),
             ),
             // Fixed Buttons Section at the bottom
             Padding(
-              padding: const EdgeInsets.only(
-                  bottom: 30.0, top: 10.0), // Padding for buttons
+              padding: const EdgeInsets.only(bottom: 30.0, top: 10.0), // Padding for buttons
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -167,47 +160,41 @@ class WelcomeScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () async {
                         final authService = AuthService();
-                        final user =
-                            await authService.signInWithGoogle(context);
+                        if (!context.mounted) return; // Check context before async gap
+                        final user = await authService.signInWithGoogle(context);
                         if (user != null) {
+                          if (!context.mounted) return; // Check context again
                           final email = user.email;
-                          final usersWithSameEmail = await FirebaseFirestore
-                              .instance
+                          final usersWithSameEmail = await FirebaseFirestore.instance
                               .collection('users')
                               .where('email', isEqualTo: email)
                               .get();
 
                           String? existingRole;
-                          for (var doc in usersWithSameEmail.docs) {
-                            if (doc['role'] != null) {
-                              existingRole = doc['role'];
-                              break;
-                            }
+                          if (usersWithSameEmail.docs.isNotEmpty) {
+                             existingRole = usersWithSameEmail.docs.first.data()['role'] as String?;
                           }
 
-                          if (existingRole == 'tunanetra') {
+                          if (!context.mounted) return;
+                          if (existingRole == 'tunanetra') { // 'tunanetra' means visually impaired
                             Navigator.pushReplacementNamed(context, '/main');
-                          } else if (existingRole == 'keluarga') {
+                          } else if (existingRole == 'keluarga') { // 'keluarga' means family
                             await authService.signOut();
+                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text(
-                                      'This account is a family account, it cannot be used to login as a visually impaired user.')),
+                                  content: Text('This account is a family account, it cannot be used to login as a visually impaired user.')),
                             );
                           } else if (existingRole == null) {
                             // New user, create visually impaired role
-                            await authService.saveUserRole(
-                              user.uid,
-                              'tunanetra',
-                              email: user.email,
-                            );
+                            await authService.saveUserRole(user.uid, 'tunanetra', email: user.email);
+                            if (!context.mounted) return;
                             Navigator.pushReplacementNamed(context, '/main');
-                          } else {
+                          } else { // Role is neither or unexpected
                             await authService.signOut();
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Invalid account role. Please contact the administrator.')),
+                              const SnackBar(content: Text('Invalid account role. Please contact the administrator.')),
                             );
                           }
                         }
@@ -251,55 +238,46 @@ class WelcomeScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () async {
                         final authService = AuthService();
-                        final user =
-                            await authService.signInWithGoogle(context);
+                        if (!context.mounted) return; // Check context before async gap
+                        final user = await authService.signInWithGoogle(context);
                         if (user != null) {
+                           if (!context.mounted) return; // Check context again
                           final email = user.email;
-                          final usersWithSameEmail = await FirebaseFirestore
-                              .instance
+                          final usersWithSameEmail = await FirebaseFirestore.instance
                               .collection('users')
                               .where('email', isEqualTo: email)
                               .get();
 
                           String? existingRole;
-                          for (var doc in usersWithSameEmail.docs) {
-                            if (doc['role'] != null) {
-                              existingRole = doc['role'];
-                              break;
-                            }
+                           if (usersWithSameEmail.docs.isNotEmpty) {
+                             existingRole = usersWithSameEmail.docs.first.data()['role'] as String?;
                           }
-
-                          if (existingRole == 'keluarga') {
+                          
+                          if (!context.mounted) return;
+                          if (existingRole == 'keluarga') { // 'keluarga' means family
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(
-                                  builder: (context) => const LocationScreen()),
+                              MaterialPageRoute(builder: (context) => const LocationScreen()),
                             );
-                          } else if (existingRole == 'tunanetra') {
+                          } else if (existingRole == 'tunanetra') { // 'tunanetra' means visually impaired
                             await authService.signOut();
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'This account is a visually impaired user account, it cannot be used to login as a family member.')),
+                              const SnackBar(content: Text('This account is a visually impaired user account, it cannot be used to login as a family member.')),
                             );
                           } else if (existingRole == null) {
                             // New user, create family role
-                            await authService.saveUserRole(
-                              user.uid,
-                              'keluarga',
-                              email: user.email,
-                            );
+                            await authService.saveUserRole(user.uid, 'keluarga', email: user.email);
+                            if (!context.mounted) return;
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(
-                                  builder: (context) => const LocationScreen()),
+                              MaterialPageRoute(builder: (context) => const LocationScreen()),
                             );
-                          } else {
+                          } else { // Role is neither or unexpected
                             await authService.signOut();
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Invalid account role. Please contact the administrator.')),
+                              const SnackBar(content: Text('Invalid account role. Please contact the administrator.')),
                             );
                           }
                         }

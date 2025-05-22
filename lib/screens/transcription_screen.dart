@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:livekit_components/livekit_components.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart'; // Provider is not directly used here, TranscriptionBuilder handles it
 import '../widgets/transcription_widget.dart' as local;
 
 class TranscriptionScreen extends StatelessWidget {
-  // Hapus parameter RoomContext dari constructor
+  // RoomContext parameter removed from constructor
   // final RoomContext roomContext;
 
   const TranscriptionScreen({super.key}); //, required this.roomContext});
 
   @override
   Widget build(BuildContext context) {
-    // RoomContext akan didapatkan oleh TranscriptionBuilder dari Provider
+    // RoomContext will be obtained by TranscriptionBuilder from Provider
     // final roomContext = context.watch<RoomContext>();
 
     return Scaffold(
@@ -26,7 +26,7 @@ class TranscriptionScreen extends StatelessWidget {
         ),
         backgroundColor: const Color(0xFF3A59D1),
         elevation: 0,
-        centerTitle: false,
+        centerTitle: false, // Title not centered
         actions: [
           IconButton(
             icon: const Icon(
@@ -35,30 +35,29 @@ class TranscriptionScreen extends StatelessWidget {
               size: 28,
             ),
             onPressed: () {
-              // Implementasi fungsi hapus history
+              // TODO: Implement history deletion functionality
             },
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        // Gunakan TranscriptionBuilder untuk mendapatkan data transkripsi
+        // Use TranscriptionBuilder to get transcription data
         child: TranscriptionBuilder(
-          // Biarkan TranscriptionBuilder mengambil RoomContext sendiri
+          // Let TranscriptionBuilder get RoomContext on its own
           builder: (context, roomCtx, transcriptions) {
-            // roomCtx di sini didapatkan dari builder, bukan dari parameter widget
-            // Tampilkan TranscriptionWidget lokal dengan data yang diterima
+            // roomCtx here is obtained from the builder, not from a widget parameter
+            // Display local TranscriptionWidget with the received data
             return local.TranscriptionWidget(
-              // Ambil warna dari tema saat ini
+              // Get color from the current theme
               textColor: Theme.of(context).colorScheme.primary,
-              backgroundColor: const Color(
-                  0xFFBBD8F1), // Menggunakan warna BBD8F1 yang tetap
+              backgroundColor: const Color(0xFFBBD8F1), // Using fixed color BBD8F1
               transcriptions: transcriptions,
             );
           },
         ),
       ),
-      // Tambahkan bottomNavigationBar sesuai dengan gambar dan main.dart
+      // Add bottomNavigationBar according to the image and main.dart
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFF3A59D1),
         elevation: 8.0,
@@ -66,18 +65,18 @@ class TranscriptionScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            // Item View (tidak aktif)
+            // View Item (inactive)
             GestureDetector(
               onTap: () {
-                // Kembali ke layar utama (VoiceAssistant)
+                // Return to the main screen (VoiceAssistant)
                 Navigator.pop(context);
               },
               child: Container(
-                color: Colors.transparent,
+                color: Colors.transparent, // For hit testing
                 child: _buildNavItem(Icons.visibility_outlined, 'View', false),
               ),
             ),
-            // Item History (aktif)
+            // History Item (active)
             _buildNavItem(Icons.history_outlined, 'History', true),
           ],
         ),
@@ -85,7 +84,7 @@ class TranscriptionScreen extends StatelessWidget {
     );
   }
 
-  // Helper untuk membuat item navigasi
+  // Helper to create navigation items
   Widget _buildNavItem(IconData icon, String label, bool isActive) {
     final color = isActive ? Colors.white : const Color(0xFFB5C0ED);
     return SizedBox(

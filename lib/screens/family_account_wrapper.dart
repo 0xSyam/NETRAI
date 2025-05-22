@@ -3,13 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'account_screen_keluarga.dart';
 
 class FamilyAccountWrapper extends StatelessWidget {
-  const FamilyAccountWrapper({Key? key}) : super(key: key);
+  const FamilyAccountWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
 
-    // Jika user telah login, tampilkan halaman dengan data user
+    // If the user is logged in, display the page with user data
     if (user != null) {
       return AccountScreenKeluarga(
         displayName: user.displayName,
@@ -17,7 +17,7 @@ class FamilyAccountWrapper extends StatelessWidget {
         photoURL: user.photoURL,
       );
     }
-    // Jika user belum login, tampilkan halaman tanpa data
+    // If the user is not logged in, display the page without data
     else {
       return const AccountScreenKeluarga();
     }

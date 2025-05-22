@@ -1,33 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart'; // Untuk TapGestureRecognizer
-import 'package:url_launcher/url_launcher.dart'; // Untuk membuka link
+import 'package:flutter/gestures.dart'; // For TapGestureRecognizer
+import 'package:url_launcher/url_launcher.dart'; // For opening links
 
 class ContactUsScreen extends StatelessWidget {
   const ContactUsScreen({super.key});
 
-  // Helper untuk membuat TextSpan dengan link
+  // Helper to create a TextSpan with a link
   TextSpan _buildLinkTextSpan(String text, String url) {
     return TextSpan(
       text: text,
       style: const TextStyle(
-        color: Colors.blue, // Warna link
+        color: Colors.blue, // Link color
         decoration: TextDecoration.underline,
       ),
-      recognizer:
-          TapGestureRecognizer()
-            ..onTap = () async {
-              final Uri uri = Uri.parse(url);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              } else {
-                // Handle error: could not launch url
-                print('Could not launch $url');
-              }
-            },
+      recognizer: TapGestureRecognizer()
+        ..onTap = () async {
+          final Uri uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } else {
+            // Handle error: could not launch url
+            // In a real app, consider showing a SnackBar or other user feedback
+            print('Could not launch $url');
+          }
+        },
     );
   }
 
-  // Helper widget untuk bagian informasi
+  // Helper widget for information sections
   Widget _buildInfoSection({
     required String title,
     required List<Widget> children,
@@ -47,7 +47,7 @@ class ContactUsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          ...children, // Tambahkan children di bawah judul
+          ...children, // Add children below the title
         ],
       ),
     );
@@ -55,18 +55,17 @@ class ContactUsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Placeholder untuk email dan link (ganti dengan yang asli)
+    // Placeholders for email and links (replace with actual values)
     const String netraiEmail = 'netraiteam01@gmail.com';
-    const String googleFormUrl =
-        'https://forms.gle/your-form-link'; // Ganti link form
-    const String waLink = 'https://wa.me/yourphonenumber'; // Ganti link WA
+    const String googleFormUrl = 'https://forms.gle/your-form-link'; // Replace link
+    const String waLink = 'https://wa.me/yourphonenumber'; // Replace WA link
 
     final TextStyle bodyTextStyle = TextStyle(
       fontSize: 12,
       fontWeight: FontWeight.w400,
       fontFamily: 'Inter',
       color: Colors.black.withOpacity(0.8),
-      height: 1.3,
+      height: 1.3, // Line height
     );
 
     return Scaffold(
@@ -77,7 +76,7 @@ class ContactUsScreen extends StatelessWidget {
         shadowColor: Colors.grey.shade200,
         leading: IconButton(
           icon: Image.asset(
-            // Gunakan PNG back arrow
+            // Use PNG back arrow
             'assets/images/arrow_back.png',
             height: 24,
           ),
@@ -156,7 +155,7 @@ class ContactUsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Support available in Bahasa Indonesia and English',
+                'Support available in Bahasa Indonesia and English', // This was already in English
                 style: bodyTextStyle,
               ),
             ],

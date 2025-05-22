@@ -1,59 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart'; // Untuk SystemUiOverlayStyle di AppBar
-import 'package:shared_preferences/shared_preferences.dart'; // Tambahkan impor ini
+import 'package:flutter/services.dart'; // For SystemUiOverlayStyle in AppBar
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
-  // Kunci untuk SharedPreferences
+  // Key for SharedPreferences
   static const String _policyAgreedKey = 'hasAgreedToPolicy';
 
-  // Helper widget untuk item persetujuan sesuai Figma
+  // Helper widget for agreement items according to Figma
   Widget _buildAgreementItem({
     required BuildContext context,
     required String iconPath,
     required String text,
-    Color iconColor = Colors.black, // Default warna ikon di dalam lingkaran
+    Color iconColor = Colors.black, // Default icon color inside the circle
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0), // Jarak vertikal antar item
+      padding: const EdgeInsets.only(bottom: 16.0), // Vertical spacing between items
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start, // Align ikon dengan baris pertama teks
+        crossAxisAlignment: CrossAxisAlignment.start, // Align icon with the first line of text
         children: [
-          // Lingkaran dengan ikon di dalamnya
+          // Circle with icon inside
           Container(
-            width: 28, // Sesuaikan ukuran lingkaran jika perlu
+            width: 28, // Adjust circle size if needed
             height: 28,
             decoration: const BoxDecoration(
-              color: Color(0xFFB5C0ED), // Warna lingkaran dari Figma
+              color: Color(0xFFB5C0ED), // Circle color from Figma
               shape: BoxShape.circle,
             ),
-            margin: const EdgeInsets.only(
-              right: 12.0,
-            ), // Jarak lingkaran ke teks
-            padding: const EdgeInsets.all(
-              4,
-            ), // Padding di dalam lingkaran untuk ikon
+            margin: const EdgeInsets.only(right: 12.0), // Spacing from circle to text
+            padding: const EdgeInsets.all(4), // Padding inside circle for icon
             child: SvgPicture.asset(
               iconPath,
               colorFilter: ColorFilter.mode(
                 iconColor,
                 BlendMode.srcIn,
-              ), // Terapkan warna ikon
-              // Ukuran ikon di dalam lingkaran akan mengikuti padding container
+              ), // Apply icon color
+              // Icon size inside the circle will adapt to container padding
             ),
           ),
           Expanded(
             child: Text(
               text,
               style: const TextStyle(
-                color: Colors.black, // Warna teks dari Figma (#000000)
-                fontSize: 14, // Ukuran dari Figma
+                color: Colors.black, // Text color from Figma (#000000)
+                fontSize: 14, // Size from Figma
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w400, // Regular
-                height: 1.5, // Line height dari Figma
+                height: 1.5, // Line height from Figma
               ),
             ),
           ),
@@ -64,49 +59,44 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double horizontalPadding = 30.0; // Sesuaikan padding dari Figma
+    const double horizontalPadding = 30.0; // Adjust padding from Figma
     const double buttonHeight = 51.0;
 
-    // Atur status bar agar cocok dengan AppBar biru
+    // Set status bar to match blue AppBar
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Color(0xFF3A58D0),
         statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.dark, // For iOS
       ),
     );
 
     return Scaffold(
-      backgroundColor: Colors.white, // Warna latar (#FFFFFF)
+      backgroundColor: Colors.white, // Background color (#FFFFFF)
       appBar: AppBar(
-        backgroundColor: const Color(
-          0xFF3A58D0,
-        ), // Warna AppBar biru dari Figma
-        elevation: 0, // Hilangkan shadow
+        backgroundColor: const Color(0xFF3A58D0), // Blue AppBar color from Figma
+        elevation: 0, // Remove shadow
         leading: IconButton(
-          // Tombol kembali manual
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Colors.white,
-          ), // Ikon putih
+          // Manual back button
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white), // White icon
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Privacy and Terms', // Judul dari Figma
+          'Privacy and Terms', // Title from Figma
           style: TextStyle(
-            color: Colors.white, // Warna judul putih
-            fontSize: 20, // Ukuran dari Figma
+            color: Colors.white, // White title color
+            fontSize: 20, // Size from Figma
             fontWeight: FontWeight.w500, // Medium
             fontFamily: 'Inter',
             height: 1.3,
           ),
         ),
-        centerTitle: true, // Pusatkan judul jika diinginkan
+        centerTitle: true, // Center title if desired
         systemOverlayStyle: const SystemUiOverlayStyle(
-          // Pastikan overlay AppBar konsisten
+          // Ensure AppBar overlay is consistent
           statusBarColor: Color(0xFF3A58D0),
           statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.dark, // For iOS
         ),
       ),
       body: Padding(
@@ -114,19 +104,19 @@ class PrivacyPolicyScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 24), // Jarak dari AppBar
+            const SizedBox(height: 24), // Spacing from AppBar
             const Text(
-              'To use NetrAI, you agree to the following:', // Teks dari Figma
+              'To use NetrAI, you agree to the following:', // Text from Figma
               style: TextStyle(
-                color: Colors.black, // Warna teks hitam
-                fontSize: 14, // Ukuran dari Figma
+                color: Colors.black, // Black text color
+                fontSize: 14, // Size from Figma
                 fontWeight: FontWeight.w400, // Regular
                 fontFamily: 'Inter',
                 height: 1.21,
               ),
             ),
-            const SizedBox(height: 24), // Jarak ke poin persetujuan
-            // Poin-poin persetujuan dengan ikon baru
+            const SizedBox(height: 24), // Spacing to agreement points
+            // Agreement points with new icons
             _buildAgreementItem(
               context: context,
               iconPath: 'assets/icons/lock_icon.svg',
@@ -135,26 +125,24 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             _buildAgreementItem(
               context: context,
-              iconPath:
-                  'assets/icons/camera_policy_icon.svg', // Ganti dengan ikon kamera yang sesuai
+              iconPath: 'assets/icons/camera_policy_icon.svg', // Replace with appropriate camera icon
               text: 'NetrAI can record, review, and share videos for safety.',
             ),
             _buildAgreementItem(
               context: context,
-              iconPath:
-                  'assets/icons/data_icon.svg', // Ganti dengan ikon data yang sesuai
+              iconPath: 'assets/icons/data_icon.svg', // Replace with appropriate data icon
               text:
                   'The data, videos, and personal information I submit will be stored and processed in the NetrAI.',
             ),
 
-            const Spacer(), // Dorong konten ke bawah
-            // Teks penjelasan agreement
+            const Spacer(), // Push content to the bottom
+            // Agreement explanation text
             const Text(
-              'By clicking "I agree", I agree to everything above and accept the Terms of Service and Privacy Policy.', // Teks dari Figma
+              'By clicking "I agree", I agree to everything above and accept the Terms of Service and Privacy Policy.', // Text from Figma
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.black, // Warna teks hitam
-                fontSize: 14, // Ukuran dari Figma
+                color: Colors.black, // Black text color
+                fontSize: 14, // Size from Figma
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w400, // Regular
                 height: 1.5,
@@ -162,15 +150,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Tombol "I agree"
+            // "I agree" button
             Container(
               width: double.infinity,
               height: buttonHeight,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4.0), // Radius dari Figma
+                borderRadius: BorderRadius.circular(4.0), // Radius from Figma
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25), // Shadow dari Figma
+                    color: Colors.black.withOpacity(0.25), // Shadow from Figma
                     spreadRadius: 0,
                     blurRadius: 10,
                     offset: const Offset(4, 4),
@@ -179,39 +167,36 @@ class PrivacyPolicyScreen extends StatelessWidget {
               ),
               child: ElevatedButton(
                 onPressed: () async {
-                  // Jadikan async
-                  // Simpan status persetujuan
+                  // Make async
+                  // Save agreement status
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setBool(_policyAgreedKey, true);
-                  print("Status persetujuan kebijakan privasi disimpan.");
+                  // print("Privacy policy agreement status saved."); // Debug log, can be removed
 
-                  // Navigasi ke MainScreen dan hapus rute sebelumnya menggunakan named route
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, '/main', (Route<dynamic> route) => false);
+                  // Navigate to MainScreen and remove previous routes using named route
+                  if (context.mounted) { // Check if widget is still in tree
+                    Navigator.pushNamedAndRemoveUntil(context, '/main', (Route<dynamic> route) => false);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(
-                    0xFF3A58D0,
-                  ), // Warna tombol biru dari Figma
-                  foregroundColor: Colors.white, // Warna teks putih dari Figma
+                  backgroundColor: const Color(0xFF3A58D0), // Blue button color from Figma
+                  foregroundColor: Colors.white, // White text color from Figma
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      4.0,
-                    ), // Radius dari Figma
+                    borderRadius: BorderRadius.circular(4.0), // Radius from Figma
                   ),
                   padding: EdgeInsets.zero,
                   textStyle: const TextStyle(
-                    fontSize: 14, // Ukuran dari Figma
+                    fontSize: 14, // Size from Figma
                     fontWeight: FontWeight.w600, // SemiBold
                     fontFamily: 'Inter',
                     height: 1.21,
                   ),
-                  elevation: 0, // Shadow dihandle oleh Container
+                  elevation: 0, // Shadow handled by Container
                 ),
-                child: const Text('I agree'), // Teks tombol dari Figma
+                child: const Text('I agree'), // Button text from Figma
               ),
             ),
-            const SizedBox(height: 30), // Jarak dari bawah
+            const SizedBox(height: 30), // Spacing from bottom
           ],
         ),
       ),
